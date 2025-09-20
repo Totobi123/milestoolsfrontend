@@ -3,6 +3,8 @@
 
 // Global variables
 let userSession = null;
+let liveActivityInterval = null;
+let showLiveNotifications = true;
 
 // Dynamic metrics system
 function getDynamicWeeklySales() {
@@ -86,8 +88,17 @@ function hideDashboardMetrics() {
         const socialProofBanner = document.getElementById('socialProofBanner');
         const liveActivityContainer = document.getElementById('liveActivityContainer');
         const successStories = document.getElementById('successStories');
+        const liveStats = document.querySelector('.live-stats');
         
         console.log('[DASHBOARD] Hiding metrics for logged-in user');
+        
+        // Stop live activity notifications
+        showLiveNotifications = false;
+        if (liveActivityInterval) {
+            clearInterval(liveActivityInterval);
+            liveActivityInterval = null;
+            console.log('[DASHBOARD] Live activity notifications stopped');
+        }
         
         if (socialProofBanner) {
             socialProofBanner.style.display = 'none';
@@ -100,6 +111,10 @@ function hideDashboardMetrics() {
         if (successStories) {
             successStories.style.display = 'none';
             console.log('[DASHBOARD] Success stories hidden');
+        }
+        if (liveStats) {
+            liveStats.style.display = 'none';
+            console.log('[DASHBOARD] Live stats container hidden');
         }
     } else {
         console.log('[DASHBOARD] Not hiding metrics - user not activated');
@@ -11886,6 +11901,11 @@ function startLiveActivityNotifications() {
     ];
     
     function showLiveActivity() {
+        // Check if notifications are enabled
+        if (!showLiveNotifications) {
+            return;
+        }
+        
         const name = nigerianNames[Math.floor(Math.random() * nigerianNames.length)];
         const city = nigerianCities[Math.floor(Math.random() * nigerianCities.length)];
         const activity = activities[Math.floor(Math.random() * activities.length)];
@@ -11909,27 +11929,36 @@ function startLiveActivityNotifications() {
         
         container.appendChild(notification);
         
-        // Show notification
+        // Enhanced Dynamic Island-style animation
         setTimeout(() => {
             notification.classList.add('show');
         }, 100);
         
-        // Remove after 4 seconds
+        // Remove after 5 seconds with enhanced exit animation
         setTimeout(() => {
             notification.classList.remove('show');
+            notification.classList.add('hide');
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.remove();
                 }
-            }, 500);
-        }, 4000);
+            }, 600);
+        }, 5000);
     }
     
-    // Show first notification after 3 seconds
-    setTimeout(showLiveActivity, 3000);
+    // Show first notification after 3 seconds if notifications are enabled
+    setTimeout(() => {
+        if (showLiveNotifications) {
+            showLiveActivity();
+        }
+    }, 3000);
     
-    // Then show every 8-15 seconds
-    setInterval(showLiveActivity, Math.random() * 7000 + 8000);
+    // Then show every 3 minutes
+    liveActivityInterval = setInterval(() => {
+        if (showLiveNotifications) {
+            showLiveActivity();
+        }
+    }, 180000);
 }
 
 // Dynamic Social Proof Counter Updates
@@ -11937,7 +11966,7 @@ function startDynamicSocialProofUpdates() {
     // Initial update
     updateDynamicMetrics();
     
-    // Update every 60 seconds to keep metrics fresh
+    // Update every 3 minutes to keep metrics fresh
     setInterval(() => {
         updateDynamicMetrics();
         
@@ -11958,7 +11987,7 @@ function startDynamicSocialProofUpdates() {
                 codesRemainingElement.style.transform = 'scale(1)';
             }, 300);
         }
-    }, 60000);
+    }, 180000);
 }
 
 // Dynamic Urgency Countdown (replaced with time-based system)
@@ -11966,7 +11995,7 @@ function startDynamicUrgencyCountdown() {
     // Initial update
     updateDynamicMetrics();
     
-    // Update every 2 minutes to reflect time-based changes
+    // Update every 3 minutes to reflect time-based changes
     setInterval(() => {
         const codes = getTimeBasedCodeAvailability();
         const codesRemainingElement = document.getElementById('codesRemaining');
@@ -11982,7 +12011,7 @@ function startDynamicUrgencyCountdown() {
                 }, 500);
             }
         }
-    }, 120000); // Update every 2 minutes
+    }, 180000); // Update every 3 minutes
 }
 
 // Enhanced Purchase Button Click Handler
