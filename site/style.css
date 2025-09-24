@@ -3732,12 +3732,454 @@ input, textarea {
     text-align: center;
     transition: all 0.3s ease;
     backdrop-filter: blur(5px);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
 }
 
 .tool-preview:hover {
     transform: translateY(-3px);
     border-color: rgba(255, 71, 87, 0.5);
     box-shadow: 0 8px 25px rgba(255, 71, 87, 0.2);
+}
+
+.tool-preview:hover .video-overlay,
+.tool-preview:focus .video-overlay,
+.tool-preview:active .video-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Android touch optimization */
+@media (hover: none) and (pointer: coarse) {
+    .video-overlay {
+        opacity: 1;
+        visibility: visible;
+        background: rgba(0, 0, 0, 0.7);
+    }
+    
+    .tool-preview {
+        position: relative;
+    }
+    
+    .tool-preview .video-overlay {
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease-out;
+    }
+    
+    .tool-preview:active .video-overlay {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* Video Tutorial Overlay - Android Optimized */
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
+    border-radius: 16px;
+    z-index: 10;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    will-change: opacity, visibility;
+}
+
+/* Touch-first overlay reveal for Android */
+@media (hover: none) and (pointer: coarse) {
+    .video-overlay {
+        backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.75);
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .video-overlay::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 71, 87, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: -1;
+    }
+}
+
+.play-icon {
+    font-size: 2rem;
+    color: var(--primary-red);
+    animation: playIconPulse 2s infinite;
+    margin-bottom: 5px;
+    transform: translateZ(0);
+    will-change: transform;
+    touch-action: manipulation;
+}
+
+.watch-text {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+}
+
+/* Smooth Android-optimized animations */
+@keyframes playIconPulse {
+    0%, 100% { 
+        transform: scale(1) translateZ(0); 
+        opacity: 1;
+    }
+    50% { 
+        transform: scale(1.08) translateZ(0); 
+        opacity: 0.9;
+    }
+}
+
+@keyframes androidModalSlideIn {
+    from { 
+        transform: translate3d(0, 30px, 0) scale(0.95);
+        opacity: 0;
+    }
+    to { 
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes androidOverlayFadeIn {
+    from { 
+        opacity: 0;
+        transform: translateZ(0) scale(0.98);
+    }
+    to { 
+        opacity: 1;
+        transform: translateZ(0) scale(1);
+    }
+}
+
+/* Video Modal Styles - Android Optimized */
+.video-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+    will-change: opacity;
+    overflow: hidden;
+}
+
+/* Remove heavy effects on mobile */
+@media (max-width: 768px) {
+    .video-modal {
+        backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.9);
+    }
+    
+    .video-modal-content {
+        backdrop-filter: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+}
+
+.video-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.video-modal-content {
+    background: rgba(25, 25, 25, 0.98);
+    border: 2px solid var(--primary-red);
+    border-radius: 20px;
+    padding: 0;
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 800px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: modalSlideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateZ(0);
+    will-change: transform, opacity;
+}
+
+@keyframes modalSlideIn {
+    from { 
+        transform: translate3d(0, -30px, 0) scale(0.95);
+        opacity: 0;
+    }
+    to { 
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Android-specific modal animation */
+@media (max-width: 768px) {
+    .video-modal-content {
+        animation: androidModalSlideIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    .video-overlay {
+        animation: androidOverlayFadeIn 0.2s ease-out;
+    }
+}
+
+.video-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: rgba(255, 71, 87, 0.1);
+    border-bottom: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.video-modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-red), #ff6b7a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.video-modal-close {
+    color: var(--text-muted);
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    line-height: 1;
+}
+
+.video-modal-close:hover {
+    color: var(--primary-red);
+    background: rgba(255, 71, 87, 0.1);
+    transform: scale(1.1);
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+}
+
+.video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+.video-modal-footer {
+    padding: 20px 25px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cancel-video-btn {
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.8), rgba(255, 107, 122, 0.8));
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cancel-video-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+    background: linear-gradient(135deg, var(--primary-red), #ff6b7a);
+}
+
+/* Enhanced Android responsiveness */
+@media (max-width: 768px) {
+    .video-modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        margin: 5px;
+        border-radius: 16px;
+        max-height: 95vh;
+    }
+    
+    .video-modal-header {
+        padding: 12px 16px;
+        background: rgba(255, 71, 87, 0.15);
+    }
+    
+    .video-modal-header h3 {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .video-modal-close {
+        font-size: 1.6rem;
+        padding: 8px 12px;
+        margin: -8px -12px -8px 8px;
+        border-radius: 50%;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .video-modal-footer {
+        padding: 12px 16px;
+    }
+    
+    .cancel-video-btn {
+        padding: 14px 24px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        min-height: 48px;
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .video-container {
+        aspect-ratio: 16/9;
+        min-height: 200px;
+    }
+    
+    .play-icon {
+        font-size: 1.8rem;
+    }
+    
+    .watch-text {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+}
+
+/* Android-specific optimizations with performance focus */
+@media (max-width: 480px) {
+    /* Disable heavy effects on Android */
+    * {
+        backdrop-filter: none !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    }
+    
+    .tool-preview {
+        padding: 16px 12px;
+        gap: 6px;
+        min-height: 120px;
+        will-change: transform;
+        transition: transform 0.15s ease-out;
+    }
+    
+    .video-overlay {
+        border-radius: 12px;
+        gap: 6px;
+    }
+    
+    .play-icon {
+        font-size: 1.5rem;
+        margin-bottom: 2px;
+    }
+    
+    .watch-text {
+        font-size: 0.7rem;
+        line-height: 1.2;
+    }
+    
+    .video-modal-content {
+        width: 98vw;
+        margin: 2px;
+        border-radius: 12px;
+        max-height: 98vh;
+    }
+    
+    .video-modal-header {
+        padding: 10px 12px;
+    }
+    
+    .video-modal-header h3 {
+        font-size: 0.9rem;
+    }
+    
+    .video-modal-close {
+        font-size: 1.4rem;
+        min-width: 40px;
+        min-height: 40px;
+    }
+    
+    .video-container {
+        min-height: 180px;
+    }
+    
+    .cancel-video-btn {
+        font-size: 0.85rem;
+        padding: 12px 20px;
+        min-height: 44px;
+    }
+}
+
+/* Landscape orientation optimizations for Android */
+@media (max-width: 768px) and (orientation: landscape) {
+    .video-modal-content {
+        max-height: 95vh;
+        width: 90vw;
+    }
+    
+    .video-modal-header {
+        padding: 8px 16px;
+    }
+    
+    .video-modal-footer {
+        padding: 8px 16px;
+    }
+    
+    .video-container {
+        min-height: calc(90vh - 120px);
+    }
 }
 
 .tool-icon {

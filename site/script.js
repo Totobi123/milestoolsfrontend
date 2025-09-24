@@ -156,18 +156,21 @@ function setupEnhancedSecurity() {
         { ctrl: true, shift: true, key: 78, desc: 'Incognito' } // Ctrl+Shift+N
     ];
 
-    // Disable right-click context menu with enhanced detection
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        showNotification('🚨 Right-click disabled for security', 'error');
-        blurPageTemporarily();
-        return false;
-    }, { capture: true });
+    // Disable right-click context menu with enhanced detection (desktop only)
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            showNotification('🚨 Right-click disabled for security', 'error');
+            blurPageTemporarily();
+            return false;
+        }, { capture: true });
+    }
 
-    // Enhanced keyboard protection
-    document.addEventListener('keydown', function(e) {
+    // Enhanced keyboard protection (desktop only)
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+        document.addEventListener('keydown', function(e) {
         // Block individual keys
         if (blockedKeys.some(blocked => e.keyCode === blocked.key)) {
             e.preventDefault();
@@ -196,29 +199,32 @@ function setupEnhancedSecurity() {
             }
         }
 
-        // Ctrl+A (Select All) - except in inputs
-        if (e.ctrlKey && e.keyCode === 65 && !e.target.matches('input, textarea')) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }
-    }, { capture: true });
+            // Ctrl+A (Select All) - except in inputs
+            if (e.ctrlKey && e.keyCode === 65 && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, { capture: true });
+    }
 
-    // Mobile protection against long press
-    let touchStartTime = 0;
-    document.addEventListener('touchstart', function(e) {
-        touchStartTime = Date.now();
-    }, { passive: false });
+    // Mobile protection against long press (disabled on touch devices for better UX)
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+        let touchStartTime = 0;
+        document.addEventListener('touchstart', function(e) {
+            touchStartTime = Date.now();
+        }, { passive: false });
 
-    document.addEventListener('touchend', function(e) {
-        const touchDuration = Date.now() - touchStartTime;
-        if (touchDuration > 500) { // Long press detected
-            e.preventDefault();
-            e.stopPropagation();
-            showNotification('🚨 Long press disabled', 'error');
-            return false;
-        }
-    }, { passive: false });
+        document.addEventListener('touchend', function(e) {
+            const touchDuration = Date.now() - touchStartTime;
+            if (touchDuration > 500) { // Long press detected
+                e.preventDefault();
+                e.stopPropagation();
+                showNotification('🚨 Long press disabled', 'error');
+                return false;
+            }
+        }, { passive: false });
+    }
 
     // Disable drag and drop with enhanced detection
     ['dragstart', 'drag', 'dragenter', 'dragleave', 'dragover', 'drop'].forEach(event => {
@@ -304,8 +310,10 @@ function setupEnhancedSecurity() {
         }
     }
 
-    // Lightweight dev tools detection - single interval for better performance
-    setInterval(detectDevTools, 2000);
+    // Lightweight dev tools detection - single interval for better performance (desktop only)
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+        setInterval(detectDevTools, 2000);
+    }
 
     // Advanced Console Protection
     const originalConsole = window.console;
@@ -12841,3 +12849,254 @@ conversionStyles.textContent = `
     }
 `;
 document.head.appendChild(conversionStyles);
+
+// Video Tutorial System
+const videoTutorials = {
+    'crypto-withdrawal': 'Crypto Withdrawal Tutorial',
+    'bank-access': 'Bank Account Access Tutorial', 
+    'atm-card-generator': 'ATM Card Generator Tutorial',
+    'atm-withdrawal': 'ATM Withdrawal Tutorial',
+    'flash-funds': 'Flash Funds Tutorial',
+    'gift-card-generator': 'Gift Card Generator Tutorial',
+    'yahoo-formats': 'Yahoo Formats Tutorial',
+    'client-generator': 'Client Generator Tutorial',
+    'sms-reader': 'SMS Reader Tutorial',
+    'balance-adder': 'Balance Adder Tutorial',
+    'transfer-tools': 'Transfer Tools Tutorial',
+    'spribe-predictor': 'Spribe Predictor Tutorial'
+};
+
+function openVideoTutorial(toolId) {
+    console.log(`[VIDEO TUTORIAL] Opening tutorial for: ${toolId}`);
+    
+    // Add haptic feedback for Android devices
+    if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+    }
+    
+    const modal = document.getElementById('videoTutorialModal');
+    const video = document.getElementById('tutorialVideo');
+    const title = document.getElementById('videoModalTitle');
+    const videoSource = video.querySelector('source');
+    
+    if (!modal || !video || !title || !videoSource) {
+        console.error('[VIDEO TUTORIAL] Modal elements not found');
+        return;
+    }
+    
+    // Set video source and title
+    const videoPath = `tutorials/${toolId}.mp4`;
+    const tutorialTitle = videoTutorials[toolId] || 'Tool Tutorial';
+    
+    videoSource.src = videoPath;
+    title.textContent = tutorialTitle;
+    
+    // Android Chrome optimizations
+    video.preload = 'metadata';
+    video.playsInline = true;
+    video.muted = false;
+    video.controls = true;
+    video.controlsList = 'nodownload noremoteplayback';
+    video.disablePictureInPicture = true;
+    
+    // Reload video element to load new source
+    video.load();
+    
+    // Show modal with smooth transition
+    requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+        
+        // Focus trap for accessibility on mobile
+        setTimeout(() => {
+            const closeBtn = modal.querySelector('.video-modal-close');
+            if (closeBtn && window.innerWidth <= 768) {
+                closeBtn.focus();
+            }
+        }, 100);
+    });
+    
+    // Auto-play video with Android optimization
+    const playVideo = () => {
+        video.play().catch(e => {
+            console.log('[VIDEO TUTORIAL] Auto-play blocked by browser:', e.message);
+            // Show play button overlay for manual play
+            if (window.innerWidth <= 768) {
+                video.controls = true;
+            }
+        });
+    };
+    
+    // Delay play for Android performance
+    if (window.innerWidth <= 768) {
+        setTimeout(playVideo, 150);
+    } else {
+        playVideo();
+    }
+    
+    // Handle video load errors gracefully
+    video.addEventListener('error', function() {
+        console.warn(`[VIDEO TUTORIAL] Failed to load video: ${videoPath}`);
+        if (typeof showNotification === 'function') {
+            showNotification('Tutorial video not available yet', 'error');
+        }
+    }, { once: true });
+    
+    // Prevent background scrolling with proper mobile handling
+    const scrollY = window.scrollY;
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.dataset.scrollY = scrollY;
+    
+    console.log(`[VIDEO TUTORIAL] Modal opened for ${tutorialTitle}`);
+}
+
+function closeVideoTutorial() {
+    console.log('[VIDEO TUTORIAL] Closing tutorial modal');
+    
+    // Add haptic feedback for Android devices
+    if ('vibrate' in navigator) {
+        navigator.vibrate(30);
+    }
+    
+    const modal = document.getElementById('videoTutorialModal');
+    const video = document.getElementById('tutorialVideo');
+    
+    if (!modal || !video) {
+        console.error('[VIDEO TUTORIAL] Modal elements not found');
+        return;
+    }
+    
+    // Smooth closing animation
+    modal.classList.remove('show');
+    
+    // Delay hiding for animation
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, window.innerWidth <= 768 ? 150 : 200);
+    
+    // Stop and reset video efficiently
+    video.pause();
+    video.currentTime = 0;
+    video.removeAttribute('src');
+    video.load(); // Clear video data to free memory
+    
+    // Restore background scrolling with Android optimization
+    const scrollY = parseInt(document.body.dataset.scrollY || '0');
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.top = '';
+    delete document.body.dataset.scrollY;
+    if (scrollY > 0) {
+        window.scrollTo(0, scrollY);
+    }
+    
+    console.log('[VIDEO TUTORIAL] Modal closed');
+}
+
+// Android-optimized touch handling
+let touchStartY = 0;
+let touchMoved = false;
+
+function handleTouchStart(event) {
+    touchStartY = event.touches[0].clientY;
+    touchMoved = false;
+}
+
+function handleTouchMove(event) {
+    const touchY = event.touches[0].clientY;
+    if (Math.abs(touchY - touchStartY) > 10) {
+        touchMoved = true;
+    }
+}
+
+// Event listeners for video tutorial system
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modal when clicking/touching outside the content
+    const modal = document.getElementById('videoTutorialModal');
+    if (modal) {
+        // Click handler for desktop
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeVideoTutorial();
+            }
+        });
+        
+        // Touch handlers for Android
+        modal.addEventListener('touchstart', function(event) {
+            if (event.target === modal) {
+                handleTouchStart(event);
+            }
+        }, { passive: true });
+        
+        modal.addEventListener('touchmove', handleTouchMove, { passive: true });
+        
+        modal.addEventListener('touchend', function(event) {
+            if (event.target === modal && !touchMoved) {
+                closeVideoTutorial();
+            }
+        });
+    }
+    
+    // Enhanced touch handling for tool preview cards
+    const toolPreviews = document.querySelectorAll('.tool-preview');
+    toolPreviews.forEach(card => {
+        // Add touch feedback
+        card.addEventListener('touchstart', function() {
+            this.style.transform = 'translateY(-2px) scale(0.98)';
+        }, { passive: true });
+        
+        card.addEventListener('touchend', function() {
+            this.style.transform = '';
+        }, { passive: true });
+        
+        card.addEventListener('touchcancel', function() {
+            this.style.transform = '';
+        }, { passive: true });
+    });
+    
+    // Close modal with Escape key (Android keyboards)
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+            const modal = document.getElementById('videoTutorialModal');
+            if (modal && modal.classList.contains('show')) {
+                closeVideoTutorial();
+            }
+        }
+    });
+    
+    // Android Chrome performance optimization
+    if (window.innerWidth <= 768) {
+        // Reduce animation complexity on mobile
+        document.body.classList.add('mobile-optimized');
+        
+        // Optimize video loading
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+            video.preload = 'none';
+        });
+    }
+    
+    // Handle orientation changes smoothly
+    window.addEventListener('orientationchange', function() {
+        setTimeout(() => {
+            const modal = document.getElementById('videoTutorialModal');
+            if (modal && modal.classList.contains('show')) {
+                // Recalculate modal dimensions after orientation change
+                modal.style.height = window.innerHeight + 'px';
+                setTimeout(() => {
+                    modal.style.height = '';
+                }, 300);
+            }
+        }, 100);
+    });
+    
+    console.log('[VIDEO TUTORIAL] Android-optimized event listeners initialized');
+});
+
+// Make functions globally available
+window.openVideoTutorial = openVideoTutorial;
+window.closeVideoTutorial = closeVideoTutorial;

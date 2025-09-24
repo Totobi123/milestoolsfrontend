@@ -1194,65 +1194,113 @@
                     </div>
 
                     <div class="tools-grid">
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('crypto-withdrawal')">
                             <span class="tool-icon">₿</span>
                             <span class="tool-name">Crypto Withdrawal</span>
                             <span class="tool-desc">Extract from any wallet</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('bank-access')">
                             <span class="tool-icon">🏦</span>
                             <span class="tool-name">Bank Account Access</span>
                             <span class="tool-desc">All Nigerian banks supported</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('atm-card-generator')">
                             <span class="tool-icon">💳</span>
                             <span class="tool-name">ATM Card Generator</span>
                             <span class="tool-desc">Visa, Mastercard, Verve</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('atm-withdrawal')">
                             <span class="tool-icon">🏧</span>
                             <span class="tool-name">ATM Withdrawal</span>
                             <span class="tool-desc">No OTP required</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('flash-funds')">
                             <span class="tool-icon">⚡</span>
                             <span class="tool-name">Flash Funds</span>
                             <span class="tool-desc">Temporary balance show</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('gift-card-generator')">
                             <span class="tool-icon">🎁</span>
                             <span class="tool-name">Gift Card Generator</span>
                             <span class="tool-desc">Amazon, Steam, iTunes</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('yahoo-formats')">
                             <span class="tool-icon">📝</span>
                             <span class="tool-name">Yahoo Formats</span>
                             <span class="tool-desc">AI-powered scripts</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('client-generator')">
                             <span class="tool-icon">👤</span>
                             <span class="tool-name">Client Generator</span>
                             <span class="tool-desc">Fp US profiles</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('sms-reader')">
                             <span class="tool-icon">📱</span>
                             <span class="tool-name">SMS Reader</span>
                             <span class="tool-desc">Read anyone's messages</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('balance-adder')">
                             <span class="tool-icon">🎯</span>
                             <span class="tool-name">Balance Adder</span>
                             <span class="tool-desc">Betting sites supported</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('transfer-tools')">
                             <span class="tool-icon">💸</span>
                             <span class="tool-name">Transfer Tools</span>
                             <span class="tool-desc">Move funds securely</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
-                        <div class="tool-preview">
+                        <div class="tool-preview" onclick="openVideoTutorial('spribe-predictor')">
                             <span class="tool-icon">🎰</span>
                             <span class="tool-name">Spribe Predictor</span>
                             <span class="tool-desc">Aviator game predictions</span>
+                            <div class="video-overlay">
+                                <span class="play-icon">▶</span>
+                                <span class="watch-text">Watch Tutorial</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3454,6 +3502,25 @@
     <div class="sr-only">
         <h1>Miles - Secure Crypto Banking Application</h1>
         <p>This application provides secure cryptocurrency and banking transaction services.</p>
+    </div>
+
+    <!-- Video Tutorial Modal -->
+    <div id="videoTutorialModal" class="video-modal">
+        <div class="video-modal-content">
+            <div class="video-modal-header">
+                <h3 id="videoModalTitle">Tool Tutorial</h3>
+                <span class="video-modal-close" onclick="closeVideoTutorial()">&times;</span>
+            </div>
+            <div class="video-container">
+                <video id="tutorialVideo" controls>
+                    <source src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="video-modal-footer">
+                <button class="cancel-video-btn" onclick="closeVideoTutorial()">Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- Load data modules first -->
