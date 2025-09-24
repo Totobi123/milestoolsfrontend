@@ -9823,3 +9823,197 @@ input, select, textarea {
         transform: translateY(0);
     }
 }
+
+/* ATM Enhanced Animation Styles */
+.pin-brute-force-container {
+    padding: 20px;
+    text-align: center;
+}
+
+.pin-display {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.pin-digit {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 71, 87, 0.1);
+    border: 2px solid #ff4757;
+    border-radius: 12px;
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: #ff4757;
+    transition: transform 0.3s ease, color 0.3s ease;
+    will-change: transform, color;
+    transform: translate3d(0, 0, 0); /* GPU acceleration */
+}
+
+.otp-cracking-container {
+    padding: 20px;
+    text-align: center;
+}
+
+.phone-display {
+    margin: 20px 0;
+}
+
+.phone-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.phone-number {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+}
+
+.otp-display {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 30px 0;
+}
+
+.otp-digit {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 71, 87, 0.1);
+    border: 2px solid #ff4757;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: #ff4757;
+    transition: transform 0.3s ease, color 0.3s ease;
+    will-change: transform, color;
+    transform: translate3d(0, 0, 0); /* GPU acceleration */
+}
+
+.cracking-status {
+    margin: 20px 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.intermediate-animation {
+    padding: 20px;
+    text-align: center;
+}
+
+.security-bypass .bypass-step {
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    color: var(--text-muted);
+    transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
+    will-change: background, color;
+    transform: translate3d(0, 0, 0); /* GPU acceleration */
+}
+
+.security-bypass .bypass-step.active {
+    background: rgba(255, 71, 87, 0.2);
+    color: var(--primary-red);
+    border: 1px solid var(--primary-red);
+}
+
+.password-container {
+    padding: 20px;
+    text-align: center;
+}
+
+.password-prompt {
+    margin-bottom: 20px;
+}
+
+.password-input-section {
+    margin: 20px 0;
+}
+
+.password-input-section input {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 2px solid var(--primary-red);
+    border-radius: 8px;
+    background: rgba(25, 25, 25, 0.8);
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.password-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.password-btn {
+    background: linear-gradient(135deg, var(--primary-red), #ff6b7a);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.password-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 71, 87, 0.3);
+}
+
+.final-animation {
+    padding: 20px;
+    text-align: center;
+}
+
+.transaction-steps .final-step {
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    color: var(--text-muted);
+    transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
+    will-change: background, color;
+    transform: translate3d(0, 0, 0); /* GPU acceleration */
+}
+
+.transaction-steps .final-step.active {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--success-green);
+    border: 1px solid var(--success-green);
+}
+
+.amount-display {
+    margin: 30px 0;
+}
+
+.amount-text {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--success-green);
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    animation: amountPulse 2s infinite;
+    will-change: transform;
+    transform: translate3d(0, 0, 0); /* GPU acceleration */
+}
+
+@keyframes amountPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}

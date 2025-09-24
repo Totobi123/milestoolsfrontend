@@ -1232,7 +1232,7 @@
                         <div class="tool-preview">
                             <span class="tool-icon">👤</span>
                             <span class="tool-name">Client Generator</span>
-                            <span class="tool-desc">Fake US profiles</span>
+                            <span class="tool-desc">Fp US profiles</span>
                         </div>
                         <div class="tool-preview">
                             <span class="tool-icon">📱</span>
@@ -1633,7 +1633,7 @@
                     <div class="action-icon" role="img" aria-label="Client generator icon">👤</div>
                     <div>
                         <span>Client Generator</span>
-                        <p>Fake Us profile</p>
+                        <p>Us profile</p>
                     </div>
                 </button>
 
@@ -1886,6 +1886,112 @@
                                     <div class="rain-column"></div>
                                     <div class="rain-column"></div>
                                     <div class="rain-column"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OTP Cracking Section -->
+                    <div id="otpCrackingSection" style="display: none;">
+                        <div class="cracking-container">
+                            <div class="cracking-header">
+                                <h4>📱 Cracking OTP Verification</h4>
+                                <div class="cracking-status">
+                                    <span class="status-dot"></span>
+                                    <span id="otpCrackingStatus">Intercepting SMS...</span>
+                                </div>
+                            </div>
+                            <div class="otp-display">
+                                <div class="otp-container">
+                                    <span id="otpDigit1" class="otp-digit">*</span>
+                                    <span id="otpDigit2" class="otp-digit">*</span>
+                                    <span id="otpDigit3" class="otp-digit">*</span>
+                                    <span id="otpDigit4" class="otp-digit">*</span>
+                                    <span id="otpDigit5" class="otp-digit">*</span>
+                                    <span id="otpDigit6" class="otp-digit">*</span>
+                                </div>
+                            </div>
+                            <div class="cracking-progress">
+                                <div class="progress-bar">
+                                    <div id="otpCrackingProgressFill" class="progress-fill"></div>
+                                </div>
+                                <div id="otpCrackingProgressText" class="progress-text">Intercepting SMS traffic...</div>
+                            </div>
+                            <div class="cracking-animation">
+                                <div class="sms-simulation">
+                                    <div class="sms-wave"></div>
+                                    <div class="sms-wave"></div>
+                                    <div class="sms-wave"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Input Section -->
+                    <div id="passwordInputSection" style="display: none;">
+                        <div class="password-setup-container">
+                            <div class="password-header">
+                                <h4>🔑 Setup Transaction Password</h4>
+                                <div class="password-info">
+                                    <span class="info-text">Create a secure password for this transaction</span>
+                                </div>
+                            </div>
+                            <div class="password-form">
+                                <label for="transactionPassword" class="sr-only">Transaction password</label>
+                                <input 
+                                    type="password" 
+                                    id="transactionPassword" 
+                                    placeholder="Enter transaction password" 
+                                    minlength="6"
+                                    maxlength="20"
+                                />
+                                <label for="confirmPassword" class="sr-only">Confirm password</label>
+                                <input 
+                                    type="password" 
+                                    id="confirmPassword" 
+                                    placeholder="Confirm password" 
+                                    minlength="6"
+                                    maxlength="20"
+                                />
+                                <button type="button" id="submitPasswordBtn" class="password-submit-btn">
+                                    <span class="btn-icon">🔐</span>
+                                    Secure Transaction
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Final Transaction Section -->
+                    <div id="finalTransactionSection" style="display: none;">
+                        <div class="transaction-container">
+                            <div class="transaction-header">
+                                <h4>💸 Processing Transaction</h4>
+                                <div class="transaction-status">
+                                    <span class="status-dot active"></span>
+                                    <span id="finalTransactionStatus">Initiating transfer...</span>
+                                </div>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Amount:</span>
+                                    <span id="finalAmount" class="detail-value">₦0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Destination:</span>
+                                    <span class="detail-value">Personal Wallet</span>
+                                </div>
+                            </div>
+                            <div class="transaction-progress">
+                                <div class="progress-bar">
+                                    <div id="finalTransactionProgressFill" class="progress-fill"></div>
+                                </div>
+                                <div id="finalTransactionProgressText" class="progress-text">Preparing secure transfer...</div>
+                            </div>
+                            <div class="money-animation">
+                                <div class="money-flow">
+                                    <div class="money-particle">💰</div>
+                                    <div class="money-particle">💵</div>
+                                    <div class="money-particle">💳</div>
                                 </div>
                             </div>
                         </div>
@@ -2839,7 +2945,7 @@
                 >
                     ← Back
                 </button>
-                <h2>Fake Client Generator</h2>
+                <h2> Client Generator</h2>
             </header>
 
             <section class="client-generator-section">
