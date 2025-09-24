@@ -3754,27 +3754,40 @@ input, textarea {
     visibility: visible;
 }
 
-/* Android touch optimization */
+/* Android touch optimization - Instant Response */
 @media (hover: none) and (pointer: coarse) {
     .video-overlay {
-        opacity: 1;
+        opacity: 0.9;
         visibility: visible;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.8);
+        border: 2px solid rgba(255, 71, 87, 0.4);
+        border-radius: 14px;
+        transition: all 0.1s ease-out; /* Super fast response */
     }
     
     .tool-preview {
         position: relative;
+        touch-action: manipulation; /* Prevent double-tap zoom */
+        -webkit-tap-highlight-color: rgba(255, 71, 87, 0.2);
     }
     
     .tool-preview .video-overlay {
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.2s ease-out;
+        opacity: 0.9;
+        visibility: visible;
+        transform: scale(1);
+        transition: transform 0.1s ease-out;
+    }
+    
+    .tool-preview:active {
+        transform: scale(0.98); /* Immediate tap feedback */
     }
     
     .tool-preview:active .video-overlay {
         opacity: 1;
         visibility: visible;
+        transform: scale(1.02); /* Bounce effect on tap */
+        background: rgba(255, 71, 87, 0.9);
+        border-color: rgba(255, 71, 87, 0.8);
     }
 }
 
@@ -3889,25 +3902,26 @@ input, textarea {
     width: 100%;
     height: 100%;
     height: 100vh;
-    height: 100dvh;
+    height: 100svh; /* Use small viewport height for better Android support */
     background: rgba(0, 0, 0, 0.95);
     backdrop-filter: blur(10px);
     -webkit-overflow-scrolling: touch;
     touch-action: manipulation;
     will-change: opacity;
     overflow: hidden;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* Remove heavy effects on mobile */
-@media (max-width: 768px) {
+/* Remove heavy effects on mobile and coarse pointer devices */
+@media (max-width: 768px), (pointer: coarse) {
     .video-modal {
-        backdrop-filter: none;
+        backdrop-filter: none !important;
         background: rgba(0, 0, 0, 0.9);
     }
     
     .video-modal-content {
-        backdrop-filter: none;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        backdrop-filter: none !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
     }
 }
 
@@ -3930,13 +3944,15 @@ input, textarea {
     padding: 0;
     max-width: 90vw;
     max-height: 90vh;
-    width: 800px;
+    max-height: 90svh; /* Use small viewport height for Android */
+    width: min(800px, 90vw); /* Responsive width that works on all screens */
     backdrop-filter: blur(15px);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     animation: modalSlideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transform: translateZ(0);
     will-change: transform, opacity;
+    position: relative;
 }
 
 @keyframes modalSlideIn {
@@ -3950,14 +3966,26 @@ input, textarea {
     }
 }
 
-/* Android-specific modal animation */
+/* Android-specific modal animation - Ultra smooth */
 @media (max-width: 768px) {
     .video-modal-content {
-        animation: androidModalSlideIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        animation: androidModalSlideIn 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); /* Faster, smoother curve */
+        will-change: transform, opacity;
     }
     
     .video-overlay {
-        animation: androidOverlayFadeIn 0.2s ease-out;
+        animation: androidOverlayFadeIn 0.15s ease-out; /* Faster overlay animation */
+    }
+}
+
+/* Ultra-fast Android animation for immediate feel */
+@media (max-width: 480px) {
+    .video-modal-content {
+        animation: androidModalSlideIn 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); /* Even faster on small screens */
+    }
+    
+    .video-modal.show {
+        animation: modalFadeIn 0.1s ease-out; /* Super fast fade in */
     }
 }
 
@@ -4042,11 +4070,13 @@ input, textarea {
 /* Enhanced Android responsiveness */
 @media (max-width: 768px) {
     .video-modal-content {
-        width: 95vw;
+        width: min(95vw, 100%);
         max-width: 95vw;
-        margin: 5px;
+        margin: 2.5vw;
         border-radius: 16px;
         max-height: 95vh;
+        max-height: 95svh; /* Android viewport fix */
+        min-height: 300px;
     }
     
     .video-modal-header {
@@ -4064,11 +4094,12 @@ input, textarea {
         padding: 8px 12px;
         margin: -8px -12px -8px 8px;
         border-radius: 50%;
-        min-width: 44px;
-        min-height: 44px;
+        min-width: 48px; /* Increased for better touch targets on Android */
+        min-height: 48px; /* Google's recommended minimum touch target */
         display: flex;
         align-items: center;
         justify-content: center;
+        touch-action: manipulation; /* Prevent zoom on double tap */
     }
     
     .video-modal-footer {
@@ -4076,12 +4107,14 @@ input, textarea {
     }
     
     .cancel-video-btn {
-        padding: 14px 24px;
+        padding: 16px 24px;
         font-size: 0.9rem;
         border-radius: 8px;
-        min-height: 48px;
+        min-height: 48px; /* Android touch target minimum */
         width: 100%;
-        max-width: 200px;
+        max-width: 240px;
+        touch-action: manipulation; /* Prevent zoom on double tap */
+        -webkit-tap-highlight-color: transparent;
     }
     
     .video-container {
@@ -4101,10 +4134,20 @@ input, textarea {
 
 /* Android-specific optimizations with performance focus */
 @media (max-width: 480px) {
-    /* Disable heavy effects on Android */
-    * {
+    /* Disable heavy effects on Android for better performance */
+    .video-modal {
         backdrop-filter: none !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        background: rgba(0, 0, 0, 0.92);
+    }
+    
+    .video-modal-content {
+        backdrop-filter: none !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        width: 98vw;
+        margin: 1vw;
+        border-radius: 12px;
+        max-height: 98vh;
+        max-height: 98svh; /* Android viewport fix */
     }
     
     .tool-preview {
@@ -4112,12 +4155,21 @@ input, textarea {
         gap: 6px;
         min-height: 120px;
         will-change: transform;
-        transition: transform 0.15s ease-out;
+        transition: transform 0.08s ease-out; /* Ultra fast response */
+        -webkit-transform: translateZ(0); /* Hardware acceleration */
+        transform: translateZ(0);
+    }
+    
+    /* Immediate visual feedback on Android */
+    .tool-preview:active {
+        transform: translateZ(0) scale(0.95);
+        transition: transform 0.05s ease-out;
     }
     
     .video-overlay {
         border-radius: 12px;
         gap: 6px;
+        backdrop-filter: none;
     }
     
     .play-icon {
@@ -4130,15 +4182,9 @@ input, textarea {
         line-height: 1.2;
     }
     
-    .video-modal-content {
-        width: 98vw;
-        margin: 2px;
-        border-radius: 12px;
-        max-height: 98vh;
-    }
-    
     .video-modal-header {
         padding: 10px 12px;
+        background: rgba(255, 71, 87, 0.2);
     }
     
     .video-modal-header h3 {
@@ -4147,18 +4193,29 @@ input, textarea {
     
     .video-modal-close {
         font-size: 1.4rem;
-        min-width: 40px;
-        min-height: 40px;
+        min-width: 48px; /* Maintain Google's touch target minimum */
+        min-height: 48px;
+        touch-action: manipulation;
     }
     
     .video-container {
-        min-height: 180px;
+        min-height: 200px;
+        max-height: calc(98svh - 140px); /* Account for header and footer */
+    }
+    
+    .video-container video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+        border-radius: 0 0 8px 8px;
     }
     
     .cancel-video-btn {
         font-size: 0.85rem;
-        padding: 12px 20px;
-        min-height: 44px;
+        padding: 14px 20px;
+        min-height: 48px; /* Maintain Android touch target */
+        touch-action: manipulation;
     }
 }
 
@@ -4166,19 +4223,32 @@ input, textarea {
 @media (max-width: 768px) and (orientation: landscape) {
     .video-modal-content {
         max-height: 95vh;
+        max-height: 95lvh; /* Use large viewport height in landscape */
         width: 90vw;
+        height: fit-content;
     }
     
     .video-modal-header {
-        padding: 8px 16px;
+        padding: 6px 16px; /* Reduced padding for landscape */
+    }
+    
+    .video-modal-header h3 {
+        font-size: 0.95rem;
     }
     
     .video-modal-footer {
-        padding: 8px 16px;
+        padding: 6px 16px; /* Reduced padding for landscape */
     }
     
     .video-container {
-        min-height: calc(90vh - 120px);
+        min-height: calc(95lvh - 100px); /* Account for header and footer */
+        max-height: calc(95lvh - 100px);
+    }
+    
+    .cancel-video-btn {
+        padding: 10px 20px;
+        font-size: 0.8rem;
+        min-height: 44px;
     }
 }
 

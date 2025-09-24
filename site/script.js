@@ -6,6 +6,216 @@ let userSession = null;
 let liveActivityInterval = null;
 let showLiveNotifications = true;
 
+// Google Analytics Event Tracking System with GA4 compliance and PII protection
+let analyticsQueue = [];
+let gtagReady = false;
+
+// Check if gtag is ready
+const checkGtagReady = () => {
+    if (typeof gtag === 'function' && !gtagReady) {
+        gtagReady = true;
+        // Flush queued events
+        analyticsQueue.forEach(event => {
+            gtag(event.command, event.action, event.data);
+        });
+        analyticsQueue = [];
+    }
+};
+
+// Comprehensive PII sanitization for all analytics data
+const sanitizeAnalyticsParams = (params) => {
+    const sanitized = { ...params };
+    
+    Object.keys(sanitized).forEach(key => {
+        const value = sanitized[key];
+        if (typeof value === 'string') {
+            // Enhanced PII pattern detection
+            const patterns = [
+                /^\d{10,}$/,                              // Account numbers (10+ digits)
+                /^[a-zA-Z0-9]{20,}$/,                     // Long alphanumeric (wallet addresses)
+                /^0x[a-fA-F0-9]{40}$/,                    // Ethereum addresses
+                /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/,      // Bitcoin addresses
+                /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // Email addresses
+                /^[+]?[\d\s\-()]{10,}$/,                  // Phone numbers
+                /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/ // IBAN
+            ];
+            
+            const isMatch = patterns.some(pattern => pattern.test(value));
+            if (isMatch) {
+                sanitized[key] = 'REDACTED_' + value.length + '_CHARS';
+            }
+        }
+        
+        // Sanitize page_location to remove query parameters and fragments
+        if (key === 'page_location') {
+            try {
+                const url = new URL(value);
+                sanitized[key] = url.origin + url.pathname; // Remove query and hash
+            } catch (e) {
+                sanitized[key] = 'INVALID_URL';
+            }
+        }
+    });
+    
+    return sanitized;
+};
+
+const trackEvent = (action, category = 'user_interaction', label = '', value = null) => {
+    const eventData = {
+        event_category: category,
+        event_label: label,
+        section: currentSection || 'unknown',
+        device_type: window.innerWidth <= 768 ? 'mobile' : 'desktop',
+        timestamp: new Date().toISOString()
+    };
+    
+    if (value !== null) eventData.value = value;
+    
+    // Sanitize to prevent PII leakage
+    const sanitizedData = sanitizeAnalyticsParams(eventData);
+    
+    if (gtagReady && typeof gtag === 'function') {
+        gtag('event', action, sanitizedData);
+        console.log(`[ANALYTICS] Event tracked: ${action} | ${category} | ${label}`);
+    } else {
+        analyticsQueue.push({ command: 'event', action, data: sanitizedData });
+        console.log(`[ANALYTICS] Event queued: ${action} | ${category} | ${label}`);
+    }
+};
+
+// Track page views for SPA with GA4 compliance and PII protection
+const trackPageView = (page) => {
+    const pageData = {
+        page_title: page,
+        page_location: window.location.href,
+        page_path: '/' + (currentSection || 'home'),
+        device_type: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+    };
+    
+    // Sanitize all page view data including page_location
+    const sanitizedData = sanitizeAnalyticsParams(pageData);
+    
+    if (gtagReady && typeof gtag === 'function') {
+        gtag('event', 'page_view', sanitizedData);
+        console.log(`[ANALYTICS] Page view tracked: ${page}`);
+    } else {
+        analyticsQueue.push({ command: 'event', action: 'page_view', data: sanitizedData });
+        console.log(`[ANALYTICS] Page view queued: ${page}`);
+    }
+};
+
+// Track performance metrics with Web Vitals and PII protection
+const trackPerformance = (metric, value, category = 'performance') => {
+    const performanceData = {
+        metric_name: metric,
+        metric_value: Math.round(value),
+        event_category: category,
+        device_type: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+    };
+    
+    // Sanitize performance data
+    const sanitizedData = sanitizeAnalyticsParams(performanceData);
+    
+    if (gtagReady && typeof gtag === 'function') {
+        gtag('event', 'timing_complete', sanitizedData);
+    } else {
+        analyticsQueue.push({ command: 'event', action: 'timing_complete', data: sanitizedData });
+    }
+};
+
+// Web Vitals tracking with proper GA4 format and sanitization
+const trackWebVitals = () => {
+    if ('PerformanceObserver' in window) {
+        // LCP (Largest Contentful Paint) - with buffered entries
+        new PerformanceObserver((entryList) => {
+            for (const entry of entryList.getEntries()) {
+                const data = {
+                    name: 'LCP',
+                    value: Math.round(entry.startTime),
+                    rating: entry.startTime > 2500 ? 'poor' : entry.startTime > 1200 ? 'needs-improvement' : 'good',
+                    device_type: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+                };
+                
+                // Apply sanitization consistently
+                const sanitizedData = sanitizeAnalyticsParams(data);
+                
+                if (gtagReady && typeof gtag === 'function') {
+                    gtag('event', 'web_vital', sanitizedData);
+                } else {
+                    analyticsQueue.push({ command: 'event', action: 'web_vital', data: sanitizedData });
+                }
+            }
+        }).observe({ entryTypes: ['largest-contentful-paint'], buffered: true });
+        
+        // CLS (Cumulative Layout Shift) - filter user-initiated shifts
+        let clsValue = 0;
+        new PerformanceObserver((entryList) => {
+            for (const entry of entryList.getEntries()) {
+                if (!entry.hadRecentInput) {
+                    clsValue += entry.value;
+                }
+            }
+            
+            if (clsValue > 0) {
+                const data = {
+                    name: 'CLS',
+                    value: Math.round(clsValue * 1000) / 1000, // Keep precision
+                    rating: clsValue > 0.25 ? 'poor' : clsValue > 0.1 ? 'needs-improvement' : 'good',
+                    device_type: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+                };
+                
+                // Apply sanitization consistently
+                const sanitizedData = sanitizeAnalyticsParams(data);
+                
+                if (gtagReady && typeof gtag === 'function') {
+                    gtag('event', 'web_vital', sanitizedData);
+                } else {
+                    analyticsQueue.push({ command: 'event', action: 'web_vital', data: sanitizedData });
+                }
+            }
+        }).observe({ entryTypes: ['layout-shift'], buffered: true });
+        
+        // INP (Interaction to Next Paint) - if supported
+        if ('PerformanceEventTiming' in window) {
+            new PerformanceObserver((entryList) => {
+                let maxInp = 0;
+                for (const entry of entryList.getEntries()) {
+                    if (entry.processingStart && entry.startTime) {
+                        const inp = entry.processingStart - entry.startTime;
+                        maxInp = Math.max(maxInp, inp);
+                    }
+                }
+                
+                if (maxInp > 0) {
+                    const data = {
+                        name: 'INP',
+                        value: Math.round(maxInp),
+                        rating: maxInp > 500 ? 'poor' : maxInp > 200 ? 'needs-improvement' : 'good',
+                        device_type: window.innerWidth <= 768 ? 'mobile' : 'desktop'
+                    };
+                    
+                    // Apply sanitization consistently
+                    const sanitizedData = sanitizeAnalyticsParams(data);
+                    
+                    if (gtagReady && typeof gtag === 'function') {
+                        gtag('event', 'web_vital', sanitizedData);
+                    } else {
+                        analyticsQueue.push({ command: 'event', action: 'web_vital', data: sanitizedData });
+                    }
+                }
+            }).observe({ entryTypes: ['event'] });
+        }
+    }
+};
+
+// Track user journey and engagement
+const trackUserJourney = (step, details = '') => {
+    trackEvent('user_journey', 'journey_step', `${step}${details ? `: ${details}` : ''}`, Date.now());
+};
+
+// Current section tracking
+let currentSection = 'home';
+
 // Dynamic metrics system
 function getDynamicWeeklySales() {
     const now = new Date();
@@ -3573,17 +3783,175 @@ function addSmoothScrolling() {
     }
 }
 
+// Advanced smoothness optimizations beyond basic scrolling
+function addAdvancedSmoothness() {
+    // Enable hardware acceleration for all animated elements
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Scoped smoothness optimizations - not global to prevent performance issues */
+        .tool-preview, .video-modal, .notification, .progress-bar, .animated-element {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-perspective: 1000;
+            perspective: 1000;
+            transform: translateZ(0);
+            will-change: transform, opacity;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        
+        /* Reduce motion for users who prefer it */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Enhanced Android smoothness - scoped to specific elements */
+        @media (max-width: 768px) {
+            .tool-preview, .video-modal, .notification, .button, .animated-element {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                -webkit-perspective: 1000;
+                perspective: 1000;
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Optimize scroll performance
+    let ticking = false;
+    const updateScrollPerformance = () => {
+        // Track scroll performance
+        trackPerformance('scroll_interaction', performance.now());
+        ticking = false;
+    };
+    
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(updateScrollPerformance);
+            ticking = true;
+        }
+    }, { passive: true });
+    
+    // Preload critical resources
+    const preloadCriticalResources = () => {
+        const criticalResources = [
+            'style.css',
+            'data.js',
+            'crypto-data.js',
+            'names.js',
+            'lookup-functions.js'
+        ];
+        
+        criticalResources.forEach(resource => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.href = resource;
+            link.as = resource.endsWith('.css') ? 'style' : 'script';
+            document.head.appendChild(link);
+        });
+    };
+    
+    preloadCriticalResources();
+    
+    // Reduce layout thrashing
+    const optimizeLayout = () => {
+        // Batch DOM reads and writes
+        const elements = document.querySelectorAll('[data-smooth-optimize]');
+        const positions = [];
+        
+        // Batch all reads first
+        elements.forEach(el => {
+            positions.push(el.getBoundingClientRect());
+        });
+        
+        // Then batch all writes
+        elements.forEach((el, i) => {
+            if (positions[i].top < window.innerHeight) {
+                el.style.transform = 'translateZ(0)';
+            }
+        });
+    };
+    
+    // Run layout optimization on intersection
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.transform = 'translateZ(0)';
+                entry.target.style.willChange = 'transform';
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    // Observe tool previews and modals for optimization
+    document.querySelectorAll('.tool-preview, .video-modal, .notification').forEach(el => {
+        observer.observe(el);
+    });
+    
+    console.log('[SMOOTHNESS] Advanced smoothness optimizations applied');
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
+    // Track initial page load
+    const pageLoadStart = performance.now();
+    
+    // Initialize analytics and ensure gtag readiness
+    const initAnalytics = () => {
+        // Track initial page load (manual since send_page_view is false)
+        trackPageView('Miles App - Initial Load');
+        trackUserJourney('app_initialize');
+        trackWebVitals();
+    };
+    
+    // Start checking gtag readiness immediately
+    checkGtagReady();
+    
+    // Continue checking until ready and flush queue
+    let gtagCheckCount = 0;
+    const gtagInterval = setInterval(() => {
+        gtagCheckCount++;
+        
+        if (!gtagReady) {
+            checkGtagReady();
+        }
+        
+        if (gtagReady || gtagCheckCount > 20) {
+            clearInterval(gtagInterval);
+            console.log(`[ANALYTICS] Gtag ready status: ${gtagReady}, queue length: ${analyticsQueue.length}`);
+            
+            // Initialize analytics after gtag is ready (or timeout)
+            initAnalytics();
+        }
+    }, 100);
+    
     // Setup enhanced security first
     setupEnhancedSecurity();
     
-    // Add performance optimizations
+    // Add performance optimizations  
     detectLowEndDevice();
     addSmoothScrolling();
+    addAdvancedSmoothness();
     
     // Check for payment return status first
     checkPaymentReturnStatus();
+    
+    // Track page load performance
+    const pageLoadEnd = performance.now();
+    trackPerformance('page_load_time', pageLoadEnd - pageLoadStart);
     
     await initializeApp();
     setupEventListeners();
@@ -6148,7 +6516,12 @@ function activateAccount() {
     const code = document.getElementById('activationCode').value.trim();
     const activateBtn = document.getElementById('activateBtn');
 
+    // Track activation attempt
+    trackEvent('activation_attempt', 'account_management', 'code_entry');
+    trackUserJourney('activation_start');
+
     if (!code) {
+        trackEvent('activation_error', 'account_management', 'empty_code');
         showNotification('Please enter activation code', 'error');
         return;
     }
@@ -6376,7 +6749,12 @@ async function checkCryptoBalance() {
     const address = document.getElementById('cryptoWalletInput').value.trim();
     const result = document.getElementById('cryptoBalanceResult');
 
+    // Track crypto balance check attempt
+    trackEvent('crypto_balance_check', 'crypto_tools', 'balance_lookup');
+    trackUserJourney('crypto_tool_usage', 'balance_check');
+
     if (!address) {
+        trackEvent('crypto_balance_error', 'crypto_tools', 'empty_address');
         result.className = 'balance-result error';
         result.textContent = '❌ Please enter a wallet address';
         return;
@@ -6899,7 +7277,12 @@ async function verifyBankAccount() {
     const bankCode = document.getElementById('bankSelect').value;
     const result = document.getElementById('bankVerifyResult');
 
+    // Track bank account verification attempt
+    trackEvent('bank_account_verify', 'banking_tools', 'account_lookup');
+    trackUserJourney('banking_tool_usage', 'account_verification');
+
     if (!accountNumber || accountNumber.length !== 10) {
+        trackEvent('bank_verify_error', 'banking_tools', 'invalid_account_number');
         result.className = 'verify-result error';
         result.textContent = 'Please enter a valid 10-digit account number';
         return;
@@ -9262,10 +9645,20 @@ function logout() {
 }
 
 function showPage(pageId) {
+    // Track page navigation
+    trackPageView(`Miles - ${pageId}`);
+    trackUserJourney('page_navigation', pageId);
+    trackEvent('page_view', 'navigation', pageId);
+    
+    // Update current section for analytics
+    currentSection = pageId;
+    
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
     document.getElementById(pageId).classList.add('active');
+    
+    console.log(`[NAVIGATION] Switched to page: ${pageId}`);
 }
 
 function updateBalance() {
@@ -9846,9 +10239,14 @@ function showSuccessStories() {
 
 // Update page show function to include success stories
 function showPageWithSuccessStories(pageId) {
+    // Track enhanced page navigation with success stories
+    trackEvent('page_view_with_stories', 'navigation', pageId);
+    trackUserJourney('enhanced_page_navigation', pageId);
+    
     showPage(pageId);
     setTimeout(() => {
         showSuccessStories();
+        trackEvent('success_stories_loaded', 'engagement', pageId);
     }, 100);
 }
 
@@ -12869,9 +13267,24 @@ const videoTutorials = {
 function openVideoTutorial(toolId) {
     console.log(`[VIDEO TUTORIAL] Opening tutorial for: ${toolId}`);
     
-    // Add haptic feedback for Android devices
-    if ('vibrate' in navigator) {
-        navigator.vibrate(50);
+    // Track video tutorial interaction
+    trackEvent('video_tutorial_open', 'video_engagement', toolId);
+    trackUserJourney('video_tutorial_start', toolId);
+    
+    // Immediate haptic feedback for Android devices  
+    if ('vibrate' in navigator && window.innerWidth <= 768) {
+        navigator.vibrate(30); // Shorter, more responsive vibration
+    }
+    
+    // Show loading state immediately on mobile for instant feedback
+    if (window.innerWidth <= 768) {
+        document.body.style.cursor = 'wait';
+        // Add immediate visual feedback
+        const allPreviews = document.querySelectorAll('.tool-preview');
+        allPreviews.forEach(preview => {
+            preview.style.pointerEvents = 'none';
+            preview.style.opacity = '0.7';
+        });
     }
     
     const modal = document.getElementById('videoTutorialModal');
@@ -12896,25 +13309,47 @@ function openVideoTutorial(toolId) {
     video.playsInline = true;
     video.muted = false;
     video.controls = true;
-    video.controlsList = 'nodownload noremoteplayback';
+    video.controlsList = 'nodownload noremoteplayback'; // Allow fullscreen for better UX
     video.disablePictureInPicture = true;
+    video.style.maxHeight = '100%';
+    video.style.objectFit = 'contain';
     
     // Reload video element to load new source
     video.load();
     
-    // Show modal with smooth transition
-    requestAnimationFrame(() => {
+    // Show modal with instant response for Android
+    const showModal = () => {
         modal.classList.add('show');
         modal.style.display = 'flex';
         
-        // Focus trap for accessibility on mobile
-        setTimeout(() => {
-            const closeBtn = modal.querySelector('.video-modal-close');
-            if (closeBtn && window.innerWidth <= 768) {
-                closeBtn.focus();
-            }
-        }, 100);
-    });
+        // Android-specific optimizations
+        if (window.innerWidth <= 768) {
+            // Restore normal state
+            document.body.style.cursor = '';
+            const allPreviews = document.querySelectorAll('.tool-preview');
+            allPreviews.forEach(preview => {
+                preview.style.pointerEvents = '';
+                preview.style.opacity = '';
+            });
+            
+            // Prevent body scroll during modal
+            document.body.style.touchAction = 'none';
+            // Focus on close button for accessibility
+            setTimeout(() => {
+                const closeBtn = modal.querySelector('.video-modal-close');
+                if (closeBtn) {
+                    closeBtn.focus();
+                }
+            }, 100);
+        }
+    };
+    
+    // Immediate modal show for super responsive feel on Android
+    if (window.innerWidth <= 768) {
+        showModal();
+    } else {
+        requestAnimationFrame(showModal);
+    }
     
     // Auto-play video with Android optimization
     const playVideo = () => {
@@ -12927,11 +13362,18 @@ function openVideoTutorial(toolId) {
         });
     };
     
-    // Delay play for Android performance
+    // Delay play for Android performance with better error handling
     if (window.innerWidth <= 768) {
-        setTimeout(playVideo, 150);
+        // Longer delay for Android to ensure proper loading
+        setTimeout(() => {
+            if (video.readyState >= 3) { // HAVE_FUTURE_DATA
+                playVideo();
+            } else {
+                video.addEventListener('canplay', playVideo, { once: true });
+            }
+        }, 200);
     } else {
-        playVideo();
+        setTimeout(playVideo, 50);
     }
     
     // Handle video load errors gracefully
@@ -12989,26 +13431,37 @@ function closeVideoTutorial() {
     document.body.style.position = '';
     document.body.style.width = '';
     document.body.style.top = '';
+    document.body.style.touchAction = ''; // Restore touch action
     delete document.body.dataset.scrollY;
     if (scrollY > 0) {
-        window.scrollTo(0, scrollY);
+        // Use requestAnimationFrame for smoother scrolling on Android
+        requestAnimationFrame(() => {
+            window.scrollTo(0, scrollY);
+        });
     }
     
     console.log('[VIDEO TUTORIAL] Modal closed');
 }
 
-// Android-optimized touch handling
+// Android-optimized touch handling with better performance
 let touchStartY = 0;
+let touchStartX = 0;
 let touchMoved = false;
+const TOUCH_THRESHOLD = 15; // Increased threshold for better Android handling
 
 function handleTouchStart(event) {
-    touchStartY = event.touches[0].clientY;
+    const touch = event.touches[0];
+    touchStartY = touch.clientY;
+    touchStartX = touch.clientX;
     touchMoved = false;
 }
 
 function handleTouchMove(event) {
-    const touchY = event.touches[0].clientY;
-    if (Math.abs(touchY - touchStartY) > 10) {
+    const touch = event.touches[0];
+    const deltaY = Math.abs(touch.clientY - touchStartY);
+    const deltaX = Math.abs(touch.clientX - touchStartX);
+    
+    if (deltaY > TOUCH_THRESHOLD || deltaX > TOUCH_THRESHOLD) {
         touchMoved = true;
     }
 }
@@ -13025,20 +13478,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Touch handlers for Android
+        // Enhanced touch handlers for Android
         modal.addEventListener('touchstart', function(event) {
             if (event.target === modal) {
                 handleTouchStart(event);
             }
         }, { passive: true });
         
-        modal.addEventListener('touchmove', handleTouchMove, { passive: true });
+        modal.addEventListener('touchmove', function(event) {
+            if (event.target === modal) {
+                handleTouchMove(event);
+                // Prevent scrolling when touching modal overlay
+                event.preventDefault();
+            }
+        }, { passive: false }); // Need non-passive for preventDefault
         
         modal.addEventListener('touchend', function(event) {
             if (event.target === modal && !touchMoved) {
+                event.preventDefault(); // Prevent potential issues
                 closeVideoTutorial();
             }
-        });
+        }, { passive: false }); // Allow preventDefault
     }
     
     // Enhanced touch handling for tool preview cards
