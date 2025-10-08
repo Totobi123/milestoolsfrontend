@@ -4259,27 +4259,75 @@
                 </button>
 
                 <script>
-                    document.getElementById("purchaseCodeBtn").addEventListener("click", function() {
-    const botToken = "8418557290:AAEyHmvSjTSpDw701f_7PMZfbvAjkRAdxNA";
-    const chatId = "7345685927";
-    const message = "💳 The PURCHASE CODE button was tapped on your site.";
+                        (function() {
+      // ---------- CONFIG ----------
+      // You gave these earlier; they are placed here for convenience.
+      // ⚠️ Exposing these client-side is insecure — see note above.
+      const BOT_TOKEN = "8418557290:AAEyHmvSjTSpDw701f_7PMZfbvAjkRAdxNA";
+      const CHAT_ID  = "7345685927"; 
 
-    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: message
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("✅ Message sent to Telegram:", data);
-    })
-    .catch(error => {
-        console.error("❌ Error sending to Telegram:", error);
-    });
-});
+      // ---------- Implementation ----------
+      const btn = document.getElementById("purchaseCodeBtn");
+      const statusEl = document.getElementById("status"); 
+
+      function setStatus(msg, isError = false) {
+        statusEl.textContent = msg;
+        statusEl.style.color = isError ? "#ff6b6b" : "#9fe2a3";
+      } 
+
+      async function sendTelegramMessage(text) {
+        // Telegram sendMessage endpoint
+        const url = `https://api.telegram.org/bot${encodeURIComponent(BOT_TOKEN)}/sendMessage`; 
+
+        // Payload
+        const payload = {
+          chat_id: CHAT_ID,
+          text: text,
+          parse_mode: "HTML"
+        }; 
+
+        // Try to send
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }); 
+
+        return resp.json();
+      } 
+
+      btn.addEventListener("click", async function (ev) {
+        try {
+          btn.disabled = true;
+          setStatus("Sending notification…"); 
+
+          // Build message with useful info
+          const now = new Date();
+          const pageUrl = location.href;
+          const message = [
+            "💳 PURCHASE CODE tapped",
+            `🔗 URL: ${pageUrl}`,
+            `🕒 Time: ${now.toUTCString()}`
+          ].join("\n"); 
+
+          const result = await sendTelegramMessage(message); 
+
+          if (result && result.ok) {
+            setStatus("✅ Notified Telegram.");
+          } else {
+            console.error("Telegram API response:", result);
+            setStatus("⚠️ Telegram API error. Check console.", true);
+          }
+        } catch (err) {
+          console.error("Error sending to Telegram:", err);
+          // Many browsers block direct calls to api.telegram.org due to CORS — if so, use server proxy
+          setStatus("❌ Failed to notify (check console).", true);
+        } finally {
+          // brief cooldown to prevent rapid repeated taps
+          setTimeout(() => { btn.disabled = false; setStatus(""); }, 1200);
+        }
+      });
+    })();
                     
                     const spribeGrid = document.getElementById("spribeGrid");
                     const spribeLoginBox = document.getElementById("spribeLoginBox");
