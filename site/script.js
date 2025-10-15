@@ -1,5 +1,46 @@
-// Miles Security - Minimal Protection  
-// Basic security measures without interfering with normal development
+// Miles Security - Reasonable Protection  
+// Balanced protection that doesn't interfere with normal use
+
+// ===== SOURCE CODE PROTECTION =====
+(function() {
+    'use strict';
+    
+    // Disable right-click (reasonable protection)
+    document.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Block developer shortcuts ONLY (not F5, Ctrl+S, Ctrl+P)
+    document.addEventListener('keydown', e => {
+        // Only block: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U (view source)
+        if (e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+            (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Disable text selection on non-input elements
+    document.addEventListener('selectstart', e => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Block code copying
+    document.addEventListener('copy', e => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            e.clipboardData.setData('text/plain', '');
+            return false;
+        }
+    });
+    
+})();
+// ===== END PROTECTION =====
 
 // Global variables
 let userSession = null;
@@ -335,63 +376,37 @@ function hideDashboardMetrics() {
 function setupEnhancedSecurity() {
     'use strict';
 
-    // Comprehensive key blocking system
+    // ONLY block developer tools shortcuts - DO NOT block F5, Ctrl+S, Ctrl+P, etc.
     const blockedKeys = [
-        { key: 123, desc: 'F12' }, // F12
-        { key: 116, desc: 'F5' }, // F5 Refresh
-        { key: 117, desc: 'F6' }, // F6
-        { key: 118, desc: 'F7' }, // F7
-        { key: 119, desc: 'F8' }, // F8
-        { key: 120, desc: 'F9' }, // F9
-        { key: 121, desc: 'F10' }, // F10
-        { key: 122, desc: 'F11' }, // F11
-        { key: 124, desc: 'F13' } // F13
+        { key: 123, desc: 'F12' } // F12 - Only dev tools key
     ];
 
     const blockedCombos = [
         { ctrl: true, shift: true, key: 73, desc: 'Developer Tools' }, // Ctrl+Shift+I
         { ctrl: true, shift: true, key: 67, desc: 'Element Inspector' }, // Ctrl+Shift+C  
         { ctrl: true, shift: true, key: 74, desc: 'Console' }, // Ctrl+Shift+J
-        { ctrl: true, shift: true, key: 75, desc: 'Network Panel' }, // Ctrl+Shift+K
-        { ctrl: true, key: 85, desc: 'View Source' }, // Ctrl+U
-        { ctrl: true, key: 83, desc: 'Save Page' }, // Ctrl+S
-        { ctrl: true, key: 80, desc: 'Print' }, // Ctrl+P
-        { ctrl: true, key: 82, desc: 'Refresh' }, // Ctrl+R
-        { ctrl: true, shift: true, key: 82, desc: 'Hard Refresh' }, // Ctrl+Shift+R
-        { ctrl: true, key: 72, desc: 'History' }, // Ctrl+H
-        { ctrl: true, key: 74, desc: 'Downloads' }, // Ctrl+J (Alt usage)
-        { ctrl: true, shift: true, key: 68, desc: 'Dev Tools' }, // Ctrl+Shift+D
-        { alt: true, key: 9, desc: 'Tab Switch' }, // Alt+Tab
-        { alt: true, key: 115, desc: 'Alt+F4' }, // Alt+F4
-        { ctrl: true, shift: true, key: 78, desc: 'Incognito' } // Ctrl+Shift+N
+        { ctrl: true, shift: true, key: 75, desc: 'Network Panel' }, // Ctrl+Shift+K (Firefox)
+        { ctrl: true, key: 85, desc: 'View Source' } // Ctrl+U - view source only
     ];
 
-    // Disable right-click context menu with enhanced detection (desktop only)
+    // Disable right-click context menu (desktop only)
     if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            showNotification('🚨 Right-click disabled for security', 'error');
-            blurPageTemporarily();
             return false;
-        }, { capture: true });
+        });
     }
 
     // Enhanced keyboard protection (desktop only)
     if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
         document.addEventListener('keydown', function(e) {
-        // Block individual keys
+        // Block individual keys (just F12)
         if (blockedKeys.some(blocked => e.keyCode === blocked.key)) {
             e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            showNotification('🚨 Function keys disabled', 'error');
-            blurPageTemporarily();
             return false;
         }
 
-        // Block key combinations
+        // Block key combinations (only dev tools)
         for (let combo of blockedCombos) {
             let match = true;
             if (combo.ctrl && !e.ctrlKey) match = false;
@@ -401,10 +416,6 @@ function setupEnhancedSecurity() {
 
             if (match) {
                 e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                showNotification(`🚨 ${combo.desc} disabled`, 'error');
-                blurPageTemporarily();
                 return false;
             }
         }
@@ -537,26 +548,38 @@ function setupEnhancedSecurity() {
         'profileEnd', 'table', 'clear', 'memory', 'exception', 'timeStamp'
     ];
 
-    // Lightweight console override for better performance
-    consoleMethods.forEach(method => {
-        if (originalConsole[method]) {
-            Object.defineProperty(console, method, {
-                value: function() {
-                    // No-op for performance - avoid allocations
-                    return undefined;
-                },
-                writable: false,
-                configurable: false
-            });
-        }
-    });
+    // Aggressive console override - ALWAYS ACTIVE for maximum protection
+    try {
+        consoleMethods.forEach(method => {
+            if (originalConsole[method]) {
+                try {
+                    Object.defineProperty(console, method, {
+                        value: function() {
+                            // No-op - completely disable console
+                            return undefined;
+                        },
+                        writable: false,
+                        configurable: true // Must be configurable for some environments
+                    });
+                } catch (e) {
+                    // Silently fail if property can't be defined
+                }
+            }
+        });
 
-    // Prevent console property modification
-    Object.defineProperty(window, 'console', {
-        value: console,
-        writable: false,
-        configurable: false
-    });
+        // Try to prevent console property modification
+        try {
+            Object.defineProperty(window, 'console', {
+                value: console,
+                writable: false,
+                configurable: true // Must be configurable for Replit
+            });
+        } catch (e) {
+            // Silently fail if property can't be defined
+        }
+    } catch (e) {
+        // Silently fail
+    }
 
     // Block common debugging techniques
     const debugMethods = ['debugger', 'eval', 'setTimeout', 'setInterval'];

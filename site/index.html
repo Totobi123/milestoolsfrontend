@@ -4488,5 +4488,27 @@
             <p>A Product of <span class="genx-brand">GenX</span></p>
         </div>
     </footer>
+    
+    <!-- Inline Source Protection - Additional layer -->
+    <script>
+        (function() {
+            // Lightweight additional protection without breaking functionality
+            
+            // Slow debugger attempts (non-blocking)
+            setInterval(() => {
+                try {
+                    (function() {}.constructor('debugger')());
+                } catch(e) {}
+            }, 1000);
+            
+            // Clear console periodically (not aggressively)
+            setInterval(() => {
+                if (window.console && window.console.clear) {
+                    try { window.console.clear(); } catch(e) {}
+                }
+            }, 2000);
+            
+        })();
+    </script>
 </body>
 </html>
